@@ -48,7 +48,10 @@ npm run db:stop      # durdurur (veriyi silmez)
 
 - Şema, roller, yetkiler ve RLS: `supabase/migrations/`
 - Sahte demo kullanıcılar ve veriler: `supabase/seed.sql` (e-postalar `@demo.test`; yerel test şifresi dosyada)
-- Testler: `supabase/tests/database/rls.test.sql`
+- Testler: `supabase/tests/database/` (RLS, rol yetkileri, röntgen dosya erişimi)
+- Röntgenler: Storage'daki herkese kapalı `radiographs` klasöründe; yalnızca hekim görür/yükler,
+  kısa süreli imzalı bağlantıyla açılır. **Storage dosyaları veritabanı yedeğine dahil değildir.**
+  Yerelde yalnızca sahte görüntü kullanın; gerçek hasta röntgeni yüklemeyin.
 - Bulut projesi YOK. Gerçek hasta verisi kullanılmaz. Gizli anahtarlar (`sb_secret_…`) uygulamaya konmaz.
 
 Roller ve yetkiler: `sahip`, `yonetici`, `hekim`, `resepsiyonist`. Bir üyenin birden çok rolü olabilir.

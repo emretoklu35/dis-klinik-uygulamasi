@@ -12,6 +12,9 @@ import { PatientAvatar } from '@/features/patients/components';
 import { usePatient } from '@/features/patients/hooks';
 import { MedicalCard } from '@/features/patients/medical-card';
 import { TreatmentsCard } from '@/features/patients/treatments-card';
+import { usePatientRadiographs } from '@/features/radiographs/radiographs';
+import { RadiographsCard } from '@/features/radiographs/radiographs-card';
+import { useClinicSession } from '@/features/session/session-context';
 import type { Patient } from '@/features/patients/types';
 import { ageFrom, formatDate, fullName, genderLabels } from '@/features/patients/utils';
 import { formatDayLong, nowLocalDateTime } from '@/lib/dates';
@@ -95,6 +98,11 @@ export default function PatientDetailScreen() {
   const router = useRouter();
   const { data: patient, loading, error, reload } = usePatient(id);
   const { data: appointments } = usePatientAppointments(id);
+  const { can } = useClinicSession();
+  const { data: radiographs, reload: reloadRadiographs } = usePatientRadiographs(
+    id,
+    can('rontgen.oku'),
+  );
 
   // Yalnızca ilk yüklemede tam ekran bekleme; kayıttan sonra yenilerken kart yerinde kalır.
   if (loading && !patient) {
@@ -201,7 +209,8 @@ export default function PatientDetailScreen() {
       </Grid>
 
       {/* Yalnızca hekim: veritabanından gelmezse kartlar hiç çizilmez */}
-      <TreatmentsCard patient={patient} onSaved={reload} />
+      <TreatmentsCard patient={patient} radiographs={radiographs} onSaved={reload} />
+      <RadiographsCard patient={patient} radiographs={radiographs} onChanged={reloadRadiographs} />
 
       <Card title="İdari not">
         <Text style={patient.adminNote ? styles.notes : styles.empty}>

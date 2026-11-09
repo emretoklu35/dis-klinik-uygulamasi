@@ -33,7 +33,15 @@
           "imageWidth": 76
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Hasta röntgenlerini galeriden seçebilmek için fotoğraflarınıza erişim gerekiyor.",
+          "cameraPermission": "Röntgen ekranının fotoğrafını çekebilmek için kameraya erişim gerekiyor.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, Card, Chip, Divider, Segmented, TextField } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { procedureSuggestions } from '@/features/appointments/clinic';
+import { needsCompletionRadiograph, type Radiograph } from '@/features/radiographs/radiographs';
 import { useClinicSession } from '@/features/session/session-context';
 import { formatDateInput, parseDateInput, todayKey } from '@/lib/dates';
 
@@ -39,11 +40,14 @@ type Editor = { mode: 'new' } | { mode: 'edit'; treatment: Treatment };
 function TreatmentForm({
   editor,
   patientId,
+  hasCompletionRadiograph,
   onDone,
   onCancel,
 }: {
   editor: Editor;
   patientId: string;
+  /** Bu tedaviye bağlı geçerli bir bitim röntgeni var mı? */
+  hasCompletionRadiograph: boolean;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -58,8 +62,10 @@ function TreatmentForm({
     Partial<Record<'date' | 'procedure' | 'tooth' | 'form', string>>
   >({});
   const [saving, setSaving] = useState(false);
+  // Bitim röntgeni uyarısı: engellemez, bir kez onay ister.
+  const [radiographWarning, setRadiographWarning] = useState(false);
 
-  const save = async () => {
+  const save = async (confirmed = false) => {
     const e: typeof errors = {};
     const date = parseDateInput(dateText);
     if (!date) e.date = 'GG.AA.YYYY biçiminde geçerli bir tarih girin.';
@@ -70,6 +76,15 @@ function TreatmentForm({
     if (teeth.error) e.tooth = teeth.error;
     setErrors(e);
     if (Object.keys(e).length > 0 || !date) return;
+    if (
+      !confirmed &&
+      status === 'tamamlandi' &&
+      needsCompletionRadiograph(procedure) &&
+      !hasCompletionRadiograph
+    ) {
+      setRadiographWarning(true);
+      return;
+    }
 
     const input: TreatmentInput = {
       date,
@@ -148,13 +163,30 @@ function TreatmentForm({
         placeholder="İsteğe bağlı"
         multiline
       />
+      {radiographWarning ? (
+        <View style={styles.warnBox}>
+          <Text style={styles.warnText}>
+            Bitim röntgeni yüklenmedi. {procedure.trim()} için tedavi sonrası röntgen önerilir. Yine
+            de “Tamamlandı” olarak kaydedilsin mi? (Röntgeni sonra Röntgenler bölümünden ekleyip bu
+            tedaviye bağlayabilirsiniz.)
+          </Text>
+          <View style={styles.actions}>
+            <Button
+              label="Vazgeç"
+              variant="secondary"
+              onPress={() => setRadiographWarning(false)}
+            />
+            <Button label="Yine de kaydet" onPress={() => save(true)} disabled={saving} />
+          </View>
+        </View>
+      ) : null}
       {errors.form ? <Text style={styles.error}>{errors.form}</Text> : null}
       <View style={styles.actions}>
         <Button label="Vazgeç" variant="secondary" onPress={onCancel} disabled={saving} />
         <Button
           label={saving ? 'Kaydediliyor…' : 'Kaydet'}
           icon="checkmark"
-          onPress={save}
+          onPress={() => save()}
           disabled={saving}
         />
       </View>
@@ -163,12 +195,24 @@ function TreatmentForm({
 }
 
 /** Tedavi geçmişi: yalnızca hekim yetkisiyle gösterilir (patient.treatments null değilse). */
-export function TreatmentsCard({ patient, onSaved }: { patient: Patient; onSaved: () => void }) {
+export function TreatmentsCard({
+  patient,
+  radiographs = [],
+  onSaved,
+}: {
+  patient: Patient;
+  /** Hekimse bu hastanın röntgenleri (öncesi/bitim durumunu göstermek için). */
+  radiographs?: Radiograph[];
+  onSaved: () => void;
+}) {
   const { can } = useClinicSession();
   const canWrite = can('tedavi.yaz');
   const [editor, setEditor] = useState<Editor | null>(null);
   const treatments = patient.treatments;
   if (!treatments) return null;
+
+  const radiographFor = (treatmentId: string, purpose: Radiograph['purpose']) =>
+    radiographs.some((r) => !r.invalid && r.treatmentId === treatmentId && r.purpose === purpose);
 
   return (
     <Card
@@ -189,6 +233,9 @@ export function TreatmentsCard({ patient, onSaved }: { patient: Patient; onSaved
           key={editor.mode === 'edit' ? editor.treatment.id : 'yeni'}
           editor={editor}
           patientId={patient.id}
+          hasCompletionRadiograph={
+            editor.mode === 'edit' && radiographFor(editor.treatment.id, 'tedavi_sonrasi')
+          }
           onCancel={() => setEditor(null)}
           onDone={() => {
             setEditor(null);
@@ -221,6 +268,13 @@ export function TreatmentsCard({ patient, onSaved }: { patient: Patient; onSaved
                   {t.doctorName}
                   {t.note ? ` · ${t.note}` : ''}
                 </Text>
+                {needsCompletionRadiograph(t.procedure) ||
+                radiographs.some((r) => r.treatmentId === t.id) ? (
+                  <Text style={styles.xray}>
+                    Röntgen: öncesi {radiographFor(t.id, 'tedavi_oncesi') ? '✓' : '—'} · bitim{' '}
+                    {radiographFor(t.id, 'tedavi_sonrasi') ? '✓' : '—'}
+                  </Text>
+                ) : null}
               </View>
               <Badge label={treatmentStatusLabels[t.status]} tone={statusTone[t.status]} />
             </Pressable>
@@ -246,6 +300,14 @@ const styles = StyleSheet.create({
   col: { flexGrow: 1, flexBasis: 220 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm },
   error: { fontSize: 13, color: Colors.danger },
+  warnBox: {
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.warningSoft,
+  },
+  warnText: { fontSize: 13, color: Colors.warning },
+  xray: { fontSize: 12, color: Colors.textMuted },
   empty: { fontSize: 14, color: Colors.textMuted },
   treatment: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   treatmentDate: { width: 92 },

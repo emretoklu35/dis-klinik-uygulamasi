@@ -34,6 +34,8 @@ export type Permission =
   | 'saglik.detay.yaz'
   | 'tedavi.oku'
   | 'tedavi.yaz'
+  | 'rontgen.oku'
+  | 'rontgen.yaz'
   | 'randevu.oku'
   | 'randevu.yaz'
   | 'gorev.oku'

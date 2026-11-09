@@ -178,9 +178,10 @@ insert into public.patient_payments (clinic_id, patient_id, amount, method, paid
   ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002', 150000, 'havale',      current_date - 30, null, null);
 
 -- Stok (SAHTE malzemeler). Hareketler sistem kaydı olarak girilir (created_by boş).
+-- Eldiven ve maske tek tek sayılmaz: temel birimleri KUTU (kullanım = bir kutu açıldı).
 insert into public.stock_items (id, clinic_id, name, category, unit, pack_name, pack_size, min_level, track_lots, supplier, updated_by) values
-  ('50000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 'Muayene eldiveni (M)', 'sarf',          'adet',   'kutu',  100, 200, false, 'Demo Medikal', null),
-  ('50000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'Cerrahi maske',        'sarf',          'adet',   'kutu',   50, 100, false, 'Demo Medikal', null),
+  ('50000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 'Muayene eldiveni (M)', 'sarf',          'kutu',    null,     1,   3, false, 'Demo Medikal', null),
+  ('50000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'Cerrahi maske',        'sarf',          'kutu',    null,     1,   2, false, 'Demo Medikal', null),
   ('50000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'Artikain anestezik',   'anestezik',     'karpül', 'kutu',   50,  40, true,  'Demo Ecza',    null),
   ('50000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'Kompozit A2',          'dolgu',         'şırınga', null,     1,   5, true,  'Demo Dental',  null),
   ('50000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'İmplant 4.0×10 mm',    'implant',       'adet',    null,     1,   3, true,  'Demo İmplant', null),
@@ -189,9 +190,9 @@ insert into public.stock_items (id, clinic_id, name, category, unit, pack_name, 
 
 -- Bu hareketler seed sırasında tetikleyiciden geçer (oturum yok → created_by boş kalır)
 insert into public.stock_movements (clinic_id, item_id, kind, quantity, lot_no, expiry_date, note) values
-  ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'giris',    500, null, null, 'Açılış stoğu'),
-  ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'kullanim', -340, null, null, null),
-  ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000002', 'giris',    250, null, null, 'Açılış stoğu'),
+  ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'giris',      5, null, null, 'Açılış stoğu'),
+  ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'kullanim',  -3, null, null, null),
+  ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000002', 'giris',      5, null, null, 'Açılış stoğu'),
   ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000003', 'giris',    100, 'ART-2401', current_date + 20,  'Açılış stoğu'),
   ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000003', 'giris',    100, 'ART-2409', current_date + 400, 'Açılış stoğu'),
   ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000003', 'kullanim', -64, 'ART-2401', null, null),

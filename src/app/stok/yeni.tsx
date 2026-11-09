@@ -12,7 +12,8 @@ import {
   type StockCategory,
 } from '@/features/stock/stock';
 
-const unitSuggestions = ['adet', 'karpül', 'şırınga', 'ml', 'paket', 'rulo'];
+// Tek tek sayılmayan sarflar (eldiven, maske) için "kutu" seçin: kullanım = bir kutu açıldı.
+const unitSuggestions = ['adet', 'kutu', 'paket', 'karpül', 'şırınga', 'ml', 'rulo'];
 
 export default function NewStockItemScreen() {
   const router = useRouter();
@@ -99,7 +100,12 @@ export default function NewStockItemScreen() {
               <Chip key={u} label={u} selected={unit === u} onPress={() => setUnit(u)} />
             ))}
           </View>
-          <TextField label="Birim" value={unit} onChangeText={setUnit} />
+          <TextField
+            label="Birim"
+            value={unit}
+            onChangeText={setUnit}
+            hint="Eldiven, maske gibi tek tek sayılmayan sarflarda “kutu” seçin; kullanım “bir kutu açıldı” olarak düşülür."
+          />
         </View>
         <View style={styles.row}>
           <View style={styles.col}>

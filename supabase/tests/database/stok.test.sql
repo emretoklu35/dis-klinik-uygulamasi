@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Stok testleri (pgTAP). Çalıştırma: npm run db:test
 -- a..1 sahip+hekim, a..2 hekim, a..4 resepsiyon, a..5 asistan
--- 5..1 Eldiven (160 adet), 5..3 Artikain (parti takipli; ART-2401: 36, ART-2409: 100)
+-- 5..1 Eldiven (2 kutu; kutu bazında tutulur), 5..3 Artikain (parti takipli; ART-2401: 36, ART-2409: 100)
 -- =============================================================================
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -16,18 +16,18 @@ set local request.jwt.claims = '{"sub":"a0000000-0000-4000-8000-000000000005","r
 select results_eq('select count(*)::int from stock_items', array[7], 'Asistan stok listesini görür');
 select lives_ok(
   $$insert into stock_movements (clinic_id, item_id, kind, quantity) values
-    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'kullanim', -10)$$,
-  'Asistan kullanım düşebilir');
+    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'kullanim', -1)$$,
+  'Asistan kullanım düşebilir (1 kutu açıldı)');
 select is(
-  (select quantity from stock_levels where item_id = '50000000-0000-4000-8000-000000000001'), 150,
-  'Mevcut stok hareketlerin toplamıdır (160 − 10)');
+  (select quantity from stock_levels where item_id = '50000000-0000-4000-8000-000000000001'), 1,
+  'Mevcut stok hareketlerin toplamıdır (2 − 1 kutu)');
 select throws_ok(
   $$insert into stock_movements (clinic_id, item_id, kind, quantity) values
-    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'kullanim', -151)$$,
+    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'kullanim', -2)$$,
   '23514', null, 'Stok eksiye düşemez');
 select throws_ok(
   $$insert into stock_movements (clinic_id, item_id, kind, quantity) values
-    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'giris', 100)$$,
+    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'giris', 1)$$,
   '42501', null, 'Asistan teslimat girişi yapamaz');
 select throws_ok(
   $$insert into stock_movements (clinic_id, item_id, kind, quantity) values
@@ -47,16 +47,16 @@ select throws_ok(
   '23514', null, 'Fire sebepsiz girilemez');
 select throws_ok(
   $$insert into stock_movements (clinic_id, item_id, kind, counted_quantity) values
-    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'sayim', 147)$$,
+    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'sayim', 3)$$,
   '23514', null, 'Sayım farkı açıklamasız girilemez');
 select lives_ok(
   $$insert into stock_movements (clinic_id, item_id, kind, quantity, counted_quantity, note) values
-    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'sayim', 0, 147, 'Aylık sayım')$$,
+    ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000001', 'sayim', 0, 3, 'Aylık sayım: girişi yapılmamış kutu bulundu')$$,
   'Asistan sayım girebilir');
 select results_eq(
   $$select quantity, created_by::text from stock_movements where kind = 'sayim' order by created_at desc limit 1$$,
-  $$values (-3, 'a0000000-0000-4000-8000-000000000005')$$,
-  'Sayım farkını veritabanı hesaplar (150 → 147 = −3) ve kim girdiği yazılır');
+  $$values (2, 'a0000000-0000-4000-8000-000000000005')$$,
+  'Sayım farkını veritabanı hesaplar (1 → 3 kutu = +2) ve kim girdiği yazılır');
 select throws_ok(
   $$update stock_movements set quantity = 0$$,
   '42501', null, 'Hareketler sonradan değiştirilemez (yetki yok)');
@@ -85,13 +85,13 @@ set local request.jwt.claims = '{"sub":"a0000000-0000-4000-8000-000000000001","r
 select lives_ok(
   $$with m as (
       insert into stock_movements (clinic_id, item_id, kind, quantity) values
-        ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000002', 'giris', 50)
+        ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000002', 'giris', 2)
       returning id, clinic_id)
-    insert into stock_costs (movement_id, clinic_id, unit_cost) select id, clinic_id, 250 from m$$,
+    insert into stock_costs (movement_id, clinic_id, unit_cost) select id, clinic_id, 12500 from m$$,
   'Sahip girişle birlikte maliyet kaydedebilir');
 select isnt_empty('select * from stock_costs', 'Sahip maliyetleri görür');
 select lives_ok(
-  $$update stock_items set min_level = 250 where id = '50000000-0000-4000-8000-000000000001'$$,
+  $$update stock_items set min_level = 4 where id = '50000000-0000-4000-8000-000000000001'$$,
   'Sahip kritik seviyeyi değiştirebilir');
 
 -- ============================ BAŞKA KLİNİK ===================================

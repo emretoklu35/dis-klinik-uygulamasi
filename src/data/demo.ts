@@ -22,13 +22,6 @@ export type DemoTask = {
   done: boolean;
 };
 
-export type DemoPatient = {
-  id: string;
-  name: string;
-  lastVisit: string;
-  nextStep: string;
-};
-
 export const demoClinic = {
   name: 'Örnek Diş Polikliniği',
   doctors: ['Dr. Demo A', 'Dr. Demo B'],
@@ -53,12 +46,6 @@ export const demoTasks: DemoTask[] = [
   { id: 't2', title: 'Sterilizasyon cihazı haftalık kontrolü', due: 'Bugün', priority: 'yuksek', done: false },
   { id: 't3', title: 'Sarf malzeme siparişini gözden geçir', due: 'Yarın', priority: 'normal', done: false },
   { id: 't4', title: 'Laboratuvara ölçü gönderimi', due: 'Perşembe', priority: 'normal', done: true },
-];
-
-export const demoPatients: DemoPatient[] = [
-  { id: 'h1', name: 'Demo Hasta 1', lastVisit: '2 hafta önce', nextStep: 'Kontrol randevusu' },
-  { id: 'h2', name: 'Demo Hasta 2', lastVisit: '1 ay önce', nextStep: 'Temizlik' },
-  { id: 'h3', name: 'Demo Hasta 3', lastVisit: '3 gün önce', nextStep: 'Dolgu' },
 ];
 
 export const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];

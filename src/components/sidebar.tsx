@@ -6,7 +6,7 @@ import { NavItems } from '@/constants/navigation';
 import { Colors, Radius, SidebarWidth, Spacing } from '@/constants/theme';
 
 /** Geniş web ekranları için sol menü. */
-export function Sidebar({ state, navigateToTab }: BottomTabBarProps) {
+export function Sidebar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.brand}>
@@ -30,7 +30,12 @@ export function Sidebar({ state, navigateToTab }: BottomTabBarProps) {
               key={route.key}
               accessibilityRole="link"
               accessibilityState={{ selected: focused }}
-              onPress={() => navigateToTab(route.key)}
+              onPress={() => {
+                // Varsayılan alt sekme çubuğuyla aynı davranış: zaten açık sekmeye
+                // tıklanınca iç yığın (ör. hasta kartı) en başa (listeye) döner.
+                const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                if (!focused && !event.defaultPrevented) navigateToTab(route.key);
+              }}
               style={({ pressed }) => [
                 styles.item,
                 focused && styles.itemActive,

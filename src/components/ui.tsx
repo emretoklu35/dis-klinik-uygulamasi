@@ -1,6 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -12,24 +21,38 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 export function Screen({
   title,
   subtitle,
+  headerRight,
+  inStack = false,
   children,
 }: {
-  title: string;
+  /** Boş bırakılırsa sayfa başlığı çizilmez (ör. üstte gezinme çubuğu varsa). */
+  title?: string;
   subtitle?: string;
+  headerRight?: ReactNode;
+  /** Üstünde gezinme çubuğu olan sayfalar için: üst güvenli alan boşluğunu çubuk zaten bırakır. */
+  inStack?: boolean;
   children: ReactNode;
 }) {
   const isWide = useIsWideLayout();
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={styles.safe}
+      edges={inStack ? ['left', 'right'] : ['top', 'left', 'right']}>
       <ScrollView
         contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View style={styles.inner}>
-          <View style={styles.header}>
-            <Text style={[styles.title, isWide && styles.titleWide]}>{title}</Text>
-            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-          </View>
+          {title ? (
+            <View style={styles.headerRow}>
+              <View style={styles.header}>
+                <Text style={[styles.title, isWide && styles.titleWide]}>{title}</Text>
+                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+              </View>
+              {headerRight}
+            </View>
+          ) : null}
           <DemoNotice />
           {children}
         </View>
@@ -123,6 +146,124 @@ export function Divider() {
   return <View style={styles.divider} />;
 }
 
+export function Button({
+  label,
+  onPress,
+  icon,
+  variant = 'primary',
+  disabled = false,
+}: {
+  label: string;
+  onPress: () => void;
+  icon?: IconName;
+  variant?: 'primary' | 'secondary';
+  disabled?: boolean;
+}) {
+  const primary = variant === 'primary';
+  const fg = primary ? '#FFFFFF' : Colors.primary;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => [
+        styles.button,
+        primary ? styles.buttonPrimary : styles.buttonSecondary,
+        (pressed || disabled) && { opacity: disabled ? 0.5 : 0.85 },
+      ]}>
+      {icon ? <Ionicons name={icon} size={18} color={fg} /> : null}
+      <Text style={[styles.buttonText, { color: fg }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function TextField({
+  label,
+  error,
+  hint,
+  required,
+  style,
+  ...inputProps
+}: TextInputProps & { label: string; error?: string; hint?: string; required?: boolean }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>
+        {label}
+        {required ? <Text style={{ color: Colors.danger }}> *</Text> : null}
+      </Text>
+      <TextInput
+        placeholderTextColor={Colors.textMuted}
+        accessibilityLabel={label}
+        style={[styles.input, inputProps.multiline && styles.inputMultiline, !!error && styles.inputError, style]}
+        {...inputProps}
+      />
+      {error ? (
+        <Text style={styles.fieldError}>{error}</Text>
+      ) : hint ? (
+        <Text style={styles.fieldHint}>{hint}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+/** Seçeneklerden birini seçmek için yan yana düğmeler. */
+export function Segmented<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.segmented}>
+        {options.map((o) => {
+          const selected = o.value === value;
+          return (
+            <Pressable
+              key={o.value}
+              onPress={() => onChange(o.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              style={[styles.segment, selected && styles.segmentSelected]}>
+              <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
+                {o.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+export function CenteredMessage({
+  icon,
+  title,
+  text,
+  children,
+}: {
+  icon: IconName;
+  title: string;
+  text?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <View style={styles.centered}>
+      <Ionicons name={icon} size={32} color={Colors.textMuted} />
+      <Text style={styles.centeredTitle}>{title}</Text>
+      {text ? <Text style={styles.centeredText}>{text}</Text> : null}
+      {children}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
@@ -172,4 +313,56 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 12, fontWeight: '600' },
   divider: { height: 1, backgroundColor: Colors.border },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    minHeight: 44,
+  },
+  buttonPrimary: { backgroundColor: Colors.primary },
+  buttonSecondary: { backgroundColor: Colors.primarySoft },
+  buttonText: { fontSize: 15, fontWeight: '600' },
+  field: { gap: 6 },
+  fieldLabel: { fontSize: 14, fontWeight: '600', color: Colors.text },
+  input: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: 15,
+    color: Colors.text,
+    minHeight: 44,
+  },
+  inputMultiline: { minHeight: 88, textAlignVertical: 'top' },
+  inputError: { borderColor: Colors.danger },
+  fieldError: { fontSize: 13, color: Colors.danger },
+  fieldHint: { fontSize: 12, color: Colors.textMuted },
+  segmented: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  segment: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  segmentSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  segmentText: { fontSize: 14, color: Colors.text },
+  segmentTextSelected: { color: '#FFFFFF', fontWeight: '600' },
+  centered: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl },
+  centeredTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  centeredText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
 });

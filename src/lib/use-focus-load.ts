@@ -20,7 +20,11 @@ export function useFocusLoad<T>(
   initial: T,
   errorMessage = 'Veri yüklenemedi.',
 ): LoadState<T> {
-  const [state, setState] = useState({ data: initial, loading: true, error: null as string | null });
+  const [state, setState] = useState({
+    data: initial,
+    loading: true,
+    error: null as string | null,
+  });
   const [version, setVersion] = useState(0);
 
   useFocusEffect(

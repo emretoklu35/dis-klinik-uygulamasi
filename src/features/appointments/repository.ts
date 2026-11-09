@@ -1,87 +1,208 @@
 /**
- * Randevu veri erişim katmanı. Ekranlar yalnızca `appointmentRepository` kullanır.
- * Şimdilik bellekte sahte veriyle çalışır; Supabase geldiğinde aynı arayüzü
- * uygulayan yeni bir sınıf yazılacak.
+ * Randevu veri erişim katmanı (Supabase). Ekranlar yalnızca `appointmentRepository` kullanır.
+ * İşlem ayrıntısı (appointment_clinical) RLS ile yalnızca hekime döner; diğer roller için null.
  */
 
-import { createDemoAppointments } from './demo-data';
-import { conflictMessage, findConflicts, scheduleError } from './rules';
-import type { Appointment, AppointmentInput, AppointmentStatus } from './types';
+import { addDays, fromClinicLocal, toClinicLocal } from '@/lib/dates';
+import { unwrap, unwrapMaybe } from '@/lib/db-errors';
+import { supabase } from '@/lib/supabase';
 
-/** Kullanıcıya gösterilebilecek iş kuralı hatası (çakışma, kapalı saat vb.). */
-export class AppointmentRuleError extends Error {}
+import type {
+  Appointment,
+  AppointmentClinical,
+  AppointmentInput,
+  AppointmentStatus,
+} from './types';
 
 export interface AppointmentRepository {
-  /** `fromKey` ile `toKey` (dahil) arasındaki günlerin randevuları, saate göre sıralı. */
-  listRange(fromKey: string, toKey: string): Promise<Appointment[]>;
-  listForPatient(patientId: string): Promise<Appointment[]>;
-  get(id: string): Promise<Appointment | null>;
-  create(input: AppointmentInput): Promise<Appointment>;
-  update(id: string, input: AppointmentInput): Promise<Appointment>;
-  setStatus(id: string, status: AppointmentStatus): Promise<Appointment>;
+  /** `fromKey` ile `toKey` (dahil) günleri arasındaki randevular, saate göre sıralı. */
+  listRange(clinicId: string, fromKey: string, toKey: string): Promise<Appointment[]>;
+  listForPatient(clinicId: string, patientId: string): Promise<Appointment[]>;
+  get(clinicId: string, id: string): Promise<Appointment | null>;
+  /** canWriteClinical: hekim yetkisi; yoksa işlem ayrıntısı gönderilmez. */
+  create(clinicId: string, input: AppointmentInput, canWriteClinical: boolean): Promise<string>;
+  update(
+    clinicId: string,
+    id: string,
+    input: AppointmentInput,
+    canWriteClinical: boolean,
+  ): Promise<void>;
+  setStatus(id: string, status: AppointmentStatus): Promise<void>;
 }
 
-const byStart = (a: Appointment, b: Appointment) => a.start.localeCompare(b.start);
+const SELECT =
+  'id, patient_id, doctor_member_id, chair_id, starts_at, ends_at, visit_type, status, desk_note, created_at, ' +
+  'patients(first_name, last_name), clinic_members(display_name), chairs(name), ' +
+  'appointment_clinical(procedure, tooth, clinical_note)';
 
-class InMemoryAppointmentRepository implements AppointmentRepository {
-  private items: Appointment[] = createDemoAppointments();
+type ClinicalRow = { procedure: string | null; tooth: string | null; clinical_note: string | null };
+type Row = {
+  id: string;
+  patient_id: string;
+  doctor_member_id: string;
+  chair_id: string;
+  starts_at: string;
+  ends_at: string;
+  visit_type: Appointment['visitType'];
+  status: AppointmentStatus;
+  desk_note: string | null;
+  created_at: string;
+  patients: { first_name: string; last_name: string } | null;
+  clinic_members: { display_name: string } | null;
+  chairs: { name: string } | null;
+  appointment_clinical: ClinicalRow | ClinicalRow[] | null;
+};
 
-  async listRange(fromKey: string, toKey: string) {
-    return this.items
-      .filter((a) => {
-        const day = a.start.slice(0, 10);
-        return day >= fromKey && day <= toKey;
-      })
-      .sort(byStart);
+function toAppointment(r: Row): Appointment {
+  const c = Array.isArray(r.appointment_clinical)
+    ? r.appointment_clinical[0]
+    : r.appointment_clinical;
+  return {
+    id: r.id,
+    patientId: r.patient_id,
+    patientName: r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : '—',
+    start: toClinicLocal(r.starts_at),
+    durationMin: Math.round((Date.parse(r.ends_at) - Date.parse(r.starts_at)) / 60000),
+    visitType: r.visit_type,
+    doctorMemberId: r.doctor_member_id,
+    doctorName: r.clinic_members?.display_name ?? '—',
+    chairId: r.chair_id,
+    chairName: r.chairs?.name ?? '—',
+    status: r.status,
+    deskNote: r.desk_note ?? undefined,
+    clinical: c
+      ? {
+          procedure: c.procedure ?? undefined,
+          tooth: c.tooth ?? undefined,
+          clinicalNote: c.clinical_note ?? undefined,
+        }
+      : null,
+    createdAt: r.created_at,
+  };
+}
+
+function toRow(clinicId: string, input: AppointmentInput) {
+  const startIso = fromClinicLocal(input.start);
+  return {
+    clinic_id: clinicId,
+    patient_id: input.patientId,
+    doctor_member_id: input.doctorMemberId,
+    chair_id: input.chairId,
+    starts_at: startIso,
+    ends_at: new Date(Date.parse(startIso) + input.durationMin * 60000).toISOString(),
+    visit_type: input.visitType,
+    desk_note: input.deskNote ?? null,
+  };
+}
+
+const hasClinical = (c?: AppointmentClinical) =>
+  !!(c && (c.procedure || c.tooth || c.clinicalNote));
+
+class SupabaseAppointmentRepository implements AppointmentRepository {
+  async listRange(clinicId: string, fromKey: string, toKey: string) {
+    const rows = unwrap(
+      await supabase
+        .from('appointments')
+        .select(SELECT)
+        .eq('clinic_id', clinicId)
+        .gte('starts_at', fromClinicLocal(`${fromKey}T00:00`))
+        .lt('starts_at', fromClinicLocal(`${addDays(toKey, 1)}T00:00`))
+        .order('starts_at'),
+      'Randevular yüklenemedi.',
+    );
+    return (rows as unknown as Row[]).map(toAppointment);
   }
 
-  async listForPatient(patientId: string) {
-    return this.items.filter((a) => a.patientId === patientId).sort(byStart);
+  async listForPatient(clinicId: string, patientId: string) {
+    const rows = unwrap(
+      await supabase
+        .from('appointments')
+        .select(SELECT)
+        .eq('clinic_id', clinicId)
+        .eq('patient_id', patientId)
+        .order('starts_at'),
+      'Randevular yüklenemedi.',
+    );
+    return (rows as unknown as Row[]).map(toAppointment);
   }
 
-  async get(id: string) {
-    return this.items.find((a) => a.id === id) ?? null;
+  async get(clinicId: string, id: string) {
+    const row = unwrapMaybe(
+      await supabase
+        .from('appointments')
+        .select(SELECT)
+        .eq('clinic_id', clinicId)
+        .eq('id', id)
+        .maybeSingle(),
+      'Randevu yüklenemedi.',
+    );
+    return row ? toAppointment(row as unknown as Row) : null;
   }
 
-  private check(input: AppointmentInput, ignoreId?: string, allowPast = false) {
-    const err = scheduleError(input, { allowPast });
-    if (err) throw new AppointmentRuleError(err);
-    const conflicts = findConflicts(input, this.items, ignoreId);
-    if (conflicts.length > 0) throw new AppointmentRuleError(conflictMessage(conflicts[0]));
+  async create(clinicId: string, input: AppointmentInput, canWriteClinical: boolean) {
+    const created = unwrap(
+      await supabase.from('appointments').insert(toRow(clinicId, input)).select('id').single(),
+      'Randevu kaydedilemedi.',
+    );
+    if (canWriteClinical && hasClinical(input.clinical)) {
+      await this.saveClinical(clinicId, created.id, input.clinical!);
+    }
+    return created.id;
   }
 
-  async create(input: AppointmentInput) {
-    this.check(input);
-    const appointment: Appointment = {
-      ...input,
-      id: `r${Date.now()}`,
-      status: 'bekliyor',
-      createdAt: new Date().toISOString(),
-    };
-    this.items.push(appointment);
-    return appointment;
-  }
-
-  async update(id: string, input: AppointmentInput) {
-    const current = await this.get(id);
-    if (!current) throw new AppointmentRuleError('Randevu bulunamadı.');
-    // Saati değişmeyen geçmiş randevuda (ör. not düzeltme) geçmiş kontrolü yapılmaz.
-    this.check(input, id, input.start === current.start);
-    Object.assign(current, input);
-    return current;
+  async update(clinicId: string, id: string, input: AppointmentInput, canWriteClinical: boolean) {
+    const { clinic_id: _clinic, patient_id: _patient, ...changes } = toRow(clinicId, input);
+    unwrap(
+      await supabase.from('appointments').update(changes).eq('id', id).select('id').single(),
+      'Randevu güncellenemedi.',
+    );
+    if (canWriteClinical && input.clinical) {
+      await this.saveClinical(clinicId, id, input.clinical);
+    }
   }
 
   async setStatus(id: string, status: AppointmentStatus) {
-    const current = await this.get(id);
-    if (!current) throw new AppointmentRuleError('Randevu bulunamadı.');
-    if (current.status === 'iptal' && status !== 'iptal') {
-      // İptalden geri alırken saat bu arada başkasına verilmiş olabilir.
-      const conflicts = findConflicts(current, this.items, id);
-      if (conflicts.length > 0) throw new AppointmentRuleError(conflictMessage(conflicts[0]));
+    unwrap(
+      await supabase.from('appointments').update({ status }).eq('id', id).select('id').single(),
+      'Durum değiştirilemedi.',
+    );
+  }
+
+  /** İşlem ayrıntısını ekler ya da günceller (yalnızca hekim; RLS ayrıca denetler). */
+  private async saveClinical(clinicId: string, appointmentId: string, c: AppointmentClinical) {
+    const values = {
+      procedure: c.procedure ?? null,
+      tooth: c.tooth ?? null,
+      clinical_note: c.clinicalNote ?? null,
+    };
+    const existing = unwrapMaybe(
+      await supabase
+        .from('appointment_clinical')
+        .select('appointment_id')
+        .eq('appointment_id', appointmentId)
+        .maybeSingle(),
+    );
+    if (existing) {
+      unwrap(
+        await supabase
+          .from('appointment_clinical')
+          .update(values)
+          .eq('appointment_id', appointmentId)
+          .select('appointment_id')
+          .single(),
+        'Randevu kaydedildi ama işlem ayrıntısı kaydedilemedi.',
+      );
+    } else {
+      unwrap(
+        await supabase
+          .from('appointment_clinical')
+          .insert({ appointment_id: appointmentId, clinic_id: clinicId, ...values })
+          .select('appointment_id')
+          .single(),
+        'Randevu kaydedildi ama işlem ayrıntısı kaydedilemedi.',
+      );
     }
-    current.status = status;
-    return current;
   }
 }
 
-export const appointmentRepository: AppointmentRepository = new InMemoryAppointmentRepository();
+export const appointmentRepository: AppointmentRepository = new SupabaseAppointmentRepository();

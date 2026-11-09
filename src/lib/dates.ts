@@ -1,8 +1,53 @@
 /**
- * Tarih yardımcıları. Uygulama klinik saatiyle (cihazın yerel saati) çalışır.
+ * Tarih yardımcıları. Uygulama KLİNİĞİN saat diliminde çalışır (varsayılan Europe/Istanbul);
+ * cihazın saat dilimi farklı olsa bile randevu saatleri klinik saatine göre gösterilir.
  * - "Gün anahtarı": 'YYYY-AA-GG' (ör. 2026-11-09)
- * - "Yerel tarih-saat": 'YYYY-AA-GGTSS:DD' (ör. 2026-11-09T09:30), saat dilimi içermez.
+ * - "Klinik yerel tarih-saat": 'YYYY-AA-GGTSS:DD' (ör. 2026-11-09T09:30)
+ * - Veritabanında zaman damgası (timestamptz, ISO) tutulur; dönüşüm aşağıdaki fonksiyonlarla.
  */
+
+let clinicTimeZone = 'Europe/Istanbul';
+
+/** Oturum açılınca kliniğin saat dilimi buradan ayarlanır. */
+export function setClinicTimeZone(tz: string) {
+  clinicTimeZone = tz;
+}
+
+function zonedParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  return { y: get('year'), mo: get('month'), d: get('day'), h: get('hour'), mi: get('minute') };
+}
+
+/** ISO zaman damgası → klinik yerel tarih-saat ('YYYY-AA-GGTSS:DD'). */
+export function toClinicLocal(iso: string | Date) {
+  const p = zonedParts(typeof iso === 'string' ? new Date(iso) : iso, clinicTimeZone);
+  return `${p.y}-${pad(p.mo)}-${pad(p.d)}T${pad(p.h)}:${pad(p.mi)}`;
+}
+
+/** Klinik yerel tarih-saat → ISO zaman damgası (veritabanına yazmak için). */
+export function fromClinicLocal(local: string) {
+  const [key, time = '00:00'] = local.split('T');
+  const [y, mo, d] = key.split('-').map(Number);
+  const [h, mi] = time.split(':').map(Number);
+  const wanted = Date.UTC(y, mo - 1, d, h, mi);
+  let guess = wanted;
+  // Saat dilimi farkını iki adımda bul (yaz saati geçişlerinde de doğru sonuç için).
+  for (let i = 0; i < 2; i++) {
+    const p = zonedParts(new Date(guess), clinicTimeZone);
+    const shown = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi);
+    guess += wanted - shown;
+  }
+  return new Date(guess).toISOString();
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -15,8 +60,9 @@ export function fromDateKey(key: string) {
   return new Date(y, m - 1, d);
 }
 
+/** Klinik saatine göre bugün. */
 export function todayKey() {
-  return dateKey(new Date());
+  return toClinicLocal(new Date()).slice(0, 10);
 }
 
 export function addDays(key: string, days: number) {
@@ -41,9 +87,14 @@ export function localDateTime(key: string, time: string) {
   return `${key}T${time}`;
 }
 
-/** Şu an, yerel tarih-saat olarak ('YYYY-AA-GGTSS:DD'). */
+/** Şu an, klinik yerel tarih-saat olarak ('YYYY-AA-GGTSS:DD'). */
 export function nowLocalDateTime(now = new Date()) {
-  return `${dateKey(now)}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  return toClinicLocal(now);
+}
+
+/** ISO gün numarası: 1 = Pazartesi … 7 = Pazar */
+export function isoWeekday(key: string) {
+  return ((fromDateKey(key).getDay() + 6) % 7) + 1;
 }
 
 export function parseLocalDateTime(value: string) {

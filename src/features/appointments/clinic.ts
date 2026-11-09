@@ -1,23 +1,22 @@
 /**
- * Klinik ayarları (SAHTE DEMO). İleride Ayarlar ekranından düzenlenecek.
+ * Kliniğin çalışma düzenine bağlı yardımcılar. Klinik bilgisi (saatler, günler)
+ * veritabanındaki `clinics` kaydından gelir (bkz. session-context).
  */
 
-import { minutesToTime } from '@/lib/dates';
+import type { ClinicInfo } from '@/features/session/session-context';
+import { addDays, isoWeekday, minutesToTime, todayKey } from '@/lib/dates';
 
-export const clinicConfig = {
-  name: 'Örnek Diş Polikliniği',
-  doctors: ['Dr. Demo A', 'Dr. Demo B'],
-  chairs: ['Koltuk 1', 'Koltuk 2', 'Koltuk 3'],
-  /** Dakika cinsinden: 09:00 – 18:00 */
-  openMin: 9 * 60,
-  closeMin: 18 * 60,
-  slotMin: 30,
-  /** Pazartesi–Cumartesi açık, pazar kapalı. */
-  workingDays: 6,
-};
+import type { VisitType } from './types';
 
 export const durationOptions = [15, 30, 45, 60, 90];
 
+export const visitTypeLabels: Record<VisitType, string> = {
+  muayene: 'Muayene',
+  tedavi: 'Tedavi',
+  kontrol: 'Kontrol',
+};
+
+/** Hekimin işlem ayrıntısı için hızlı öneriler. */
 export const procedureSuggestions = [
   'Kontrol muayenesi',
   'Diş taşı temizliği',
@@ -29,11 +28,31 @@ export const procedureSuggestions = [
   'Ortodonti kontrolü',
 ];
 
-/** 09:00, 09:30 … 17:30 */
-export function timeSlots() {
+/** Açılıştan kapanışa slot aralıklarıyla: 09:00, 09:30 … 17:30 */
+export function timeSlots(clinic: ClinicInfo) {
   const out: string[] = [];
-  for (let m = clinicConfig.openMin; m < clinicConfig.closeMin; m += clinicConfig.slotMin) {
-    out.push(minutesToTime(m));
+  for (let m = clinic.openMin; m < clinic.closeMin; m += clinic.slotMin) out.push(minutesToTime(m));
+  return out;
+}
+
+export function isWorkingDay(key: string, clinic: ClinicInfo) {
+  return clinic.workingDays.includes(isoWeekday(key));
+}
+
+/** Verilen günden (dahil) itibaren ilk çalışma günü. */
+export function nextWorkingDay(key: string, clinic: ClinicInfo) {
+  let d = key;
+  for (let i = 0; i < 7 && !isWorkingDay(d, clinic); i++) d = addDays(d, 1);
+  return d;
+}
+
+/** Bugünden itibaren sıradaki `count` çalışma günü. */
+export function nextWorkingDays(count: number, clinic: ClinicInfo) {
+  const out: string[] = [];
+  let d = todayKey();
+  for (let guard = 0; out.length < count && guard < 60; guard++) {
+    if (isWorkingDay(d, clinic)) out.push(d);
+    d = addDays(d, 1);
   }
   return out;
 }

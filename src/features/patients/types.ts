@@ -1,21 +1,34 @@
 /**
- * Hasta modülünün veri tipleri.
- * Veritabanı (ör. Supabase) bağlandığında tablo yapısı bu tiplerle eşleşecek.
+ * Hasta modülünün uygulama içi tipleri. Veritabanı satırlarından repository.ts'de dönüştürülür.
+ *
+ * Yetki modeli:
+ *  - Temel bilgi + alerji İŞARETİ: tüm klinik personeli
+ *  - Sağlık ayrıntısı (alerji adları, kronik hastalık, klinik not) ve tedaviler: yalnızca hekim
+ * Yetkisi olmayan kullanıcı için `medical` ve `treatments` alanları `null` gelir
+ * ("kayıt yok" anlamına gelen boş diziden farklıdır).
  */
 
-export type Gender = 'kadin' | 'erkek' | 'belirtilmedi';
+import type { Database } from '@/lib/database.types';
 
-export type TreatmentStatus = 'planlandi' | 'devam' | 'tamamlandi';
+type Enums = Database['public']['Enums'];
+
+export type Gender = Enums['gender'];
+export type TreatmentStatus = Enums['treatment_status'];
 
 export type Treatment = {
   id: string;
-  date: string; // ISO tarih: 2026-10-14
+  date: string; // gün anahtarı
   procedure: string;
-  /** FDI diş numarası, ör. "36". Genel işlemlerde boş. */
   tooth?: string;
-  doctor: string;
+  doctorName: string;
   status: TreatmentStatus;
   note?: string;
+};
+
+export type PatientMedical = {
+  allergies: string[];
+  conditions: string[];
+  clinicalNotes?: string;
 };
 
 export type Patient = {
@@ -24,31 +37,40 @@ export type Patient = {
   lastName: string;
   phone: string;
   email?: string;
-  birthDate?: string; // ISO tarih
+  birthDate?: string; // gün anahtarı
   gender: Gender;
-  /** Alerjiler: tedavi öncesi mutlaka görünmeli. */
-  allergies: string[];
-  /** Kronik hastalıklar / sürekli kullanılan ilaçlar. */
-  medicalNotes: string[];
-  notes?: string;
-  createdAt: string; // ISO tarih-saat
-  lastVisit?: string; // ISO tarih
-  treatments: Treatment[];
+  /** İdari not (ör. "veli ile geliyor"). Herkes görür. */
+  adminNote?: string;
+  /** Alerji kaydı var mı? Ayrıntı yalnızca hekime açık. */
+  hasAllergyAlert: boolean;
+  createdAt: string;
+  /** Yetki yoksa null. */
+  medical: PatientMedical | null;
+  /** Yetki yoksa null. */
+  treatments: Treatment[] | null;
 };
 
-/** Yeni hasta oluştururken formdan gelen alanlar. */
-export type NewPatientInput = Pick<
-  Patient,
-  'firstName' | 'lastName' | 'phone' | 'email' | 'birthDate' | 'gender' | 'notes'
-> & {
-  allergies: string[];
-  medicalNotes: string[];
+export type NewPatientInput = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+  birthDate?: string;
+  gender: Gender;
+  adminNote?: string;
+  /** Yalnızca hekim girebilir; diğer roller için gönderilmez. */
+  medical?: PatientMedical;
 };
 
-/** Listede gösterilen özet (detay ekranına göre daha hafif). */
-export type PatientSummary = Pick<Patient, 'id' | 'firstName' | 'lastName' | 'phone' | 'lastVisit'> & {
-  /** Randevu kayıtlarından hesaplanır (yerel tarih-saat). */
+/** Listede gösterilen özet. */
+export type PatientSummary = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  hasAllergyAlert: boolean;
+  /** Son tamamlanan randevunun günü. */
+  lastVisit?: string;
+  /** Klinik yerel tarih-saat. */
   nextAppointment?: string;
-  hasAllergy: boolean;
-  activeTreatments: number;
 };

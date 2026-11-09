@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, Card, Screen, Segmented, TextField } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { patientRepository } from '@/features/patients/repository';
+import { useClinicSession } from '@/features/session/session-context';
 import type { Gender } from '@/features/patients/types';
 import { genderLabels, parseTurkishDate, splitList } from '@/features/patients/utils';
 
@@ -16,8 +17,9 @@ type Form = {
   birthDate: string;
   gender: Gender;
   allergies: string;
-  medicalNotes: string;
-  notes: string;
+  conditions: string;
+  clinicalNotes: string;
+  adminNote: string;
 };
 
 type Errors = Partial<Record<keyof Form, string>>;
@@ -30,8 +32,9 @@ const empty: Form = {
   birthDate: '',
   gender: 'belirtilmedi',
   allergies: '',
-  medicalNotes: '',
-  notes: '',
+  conditions: '',
+  clinicalNotes: '',
+  adminNote: '',
 };
 
 function validate(f: Form): Errors {
@@ -59,6 +62,8 @@ function formatPhone(raw: string) {
 
 export default function NewPatientScreen() {
   const router = useRouter();
+  const { clinic, can } = useClinicSession();
+  const canWriteMedical = can('saglik.detay.yaz');
   const [form, setForm] = useState<Form>(empty);
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -83,7 +88,7 @@ export default function NewPatientScreen() {
     setSaving(true);
     setSaveError(null);
     try {
-      const patient = await patientRepository.create({
+      const id = await patientRepository.create(clinic.id, {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         phone: formatPhone(form.phone),
@@ -92,13 +97,19 @@ export default function NewPatientScreen() {
           ? (parseTurkishDate(form.birthDate) ?? undefined)
           : undefined,
         gender: form.gender,
-        allergies: splitList(form.allergies),
-        medicalNotes: splitList(form.medicalNotes),
-        notes: form.notes.trim() || undefined,
+        adminNote: form.adminNote.trim() || undefined,
+        // Sağlık bilgisi yalnızca hekim yetkisiyle gönderilir (veritabanı da ayrıca denetler).
+        medical: canWriteMedical
+          ? {
+              allergies: splitList(form.allergies),
+              conditions: splitList(form.conditions),
+              clinicalNotes: form.clinicalNotes.trim() || undefined,
+            }
+          : undefined,
       });
-      router.replace({ pathname: '/hastalar/[id]', params: { id: patient.id } });
-    } catch {
-      setSaveError('Hasta kaydedilemedi. Lütfen tekrar deneyin.');
+      router.replace({ pathname: '/hastalar/[id]', params: { id } });
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Hasta kaydedilemedi. Lütfen tekrar deneyin.');
       setSaving(false);
     }
   };
@@ -187,29 +198,46 @@ export default function NewPatientScreen() {
         </View>
       </Card>
 
-      <Card title="Sağlık bilgileri">
+      <Card title="İdari not">
         <TextField
-          label="Alerjiler"
-          value={form.allergies}
-          onChangeText={set('allergies')}
-          placeholder="Ör. Penisilin, Lateks"
-          hint="Birden fazlaysa virgülle ayırın. Hasta kartında kırmızı uyarı olarak görünür."
-        />
-        <TextField
-          label="Kronik hastalıklar / ilaçlar"
-          value={form.medicalNotes}
-          onChangeText={set('medicalNotes')}
-          placeholder="Ör. Hipertansiyon, Kan sulandırıcı"
-          hint="Birden fazlaysa virgülle ayırın."
-        />
-        <TextField
-          label="Notlar"
-          value={form.notes}
-          onChangeText={set('notes')}
-          placeholder="Hastayla ilgili eklemek istedikleriniz"
+          label="Not"
+          value={form.adminNote}
+          onChangeText={set('adminNote')}
+          placeholder="Ör. Veli ile birlikte geliyor"
+          hint="Tüm personel görür. Sağlıkla ilgili bilgi yazmayın."
           multiline
         />
       </Card>
+
+      {canWriteMedical ? (
+        <Card title="Sağlık bilgileri (yalnızca hekim)">
+          <TextField
+            label="Alerjiler"
+            value={form.allergies}
+            onChangeText={set('allergies')}
+            placeholder="Ör. Penisilin, Lateks"
+            hint="Birden fazlaysa virgülle ayırın. Diğer personel yalnızca “Alerji kaydı var” uyarısını görür."
+          />
+          <TextField
+            label="Kronik hastalıklar / ilaçlar"
+            value={form.conditions}
+            onChangeText={set('conditions')}
+            placeholder="Ör. Hipertansiyon, Kan sulandırıcı"
+            hint="Birden fazlaysa virgülle ayırın."
+          />
+          <TextField
+            label="Klinik not"
+            value={form.clinicalNotes}
+            onChangeText={set('clinicalNotes')}
+            placeholder="Yalnızca hekimlerin göreceği not"
+            multiline
+          />
+        </Card>
+      ) : (
+        <Text style={styles.footnote}>
+          Alerji ve sağlık bilgilerini hekim, hasta kartından girer.
+        </Text>
+      )}
 
       {errorCount > 0 ? (
         <Text style={styles.formError}>Lütfen işaretli {errorCount} alanı düzeltin.</Text>
@@ -232,7 +260,7 @@ export default function NewPatientScreen() {
       </View>
 
       <Text style={styles.footnote}>
-        Demo sürüm: kayıt yalnızca uygulama açıkken bellekte tutulur. Gerçek hasta bilgisi girmeyin.
+        Yerel geliştirme ortamı: yalnızca sahte veri girin. Gerçek hasta bilgisi girmeyin.
       </Text>
     </Screen>
   );

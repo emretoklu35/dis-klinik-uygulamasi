@@ -1,5 +1,6 @@
 import { minutesToTime } from '@/lib/dates';
 
+import { visitTypeLabels } from './clinic';
 import { endMinutes } from './rules';
 import type { Appointment, AppointmentStatus } from './types';
 
@@ -11,7 +12,10 @@ export const statusLabels: Record<AppointmentStatus, string> = {
   iptal: 'İptal edildi',
 };
 
-export const statusTone: Record<AppointmentStatus, 'primary' | 'success' | 'warning' | 'muted' | 'danger'> = {
+export const statusTone: Record<
+  AppointmentStatus,
+  'primary' | 'success' | 'warning' | 'muted' | 'danger'
+> = {
   bekliyor: 'warning',
   onaylandi: 'primary',
   tamamlandi: 'success',
@@ -30,4 +34,9 @@ export function timeRange(a: Pick<Appointment, 'start' | 'durationMin'>) {
 
 export function isActive(a: Appointment) {
   return a.status === 'bekliyor' || a.status === 'onaylandi';
+}
+
+/** Listede görünen başlık: hekim için işlem adı, diğer roller için genel tür. */
+export function appointmentTitle(a: Pick<Appointment, 'clinical' | 'visitType'>) {
+  return a.clinical?.procedure || visitTypeLabels[a.visitType];
 }

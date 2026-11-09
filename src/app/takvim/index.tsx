@@ -5,30 +5,42 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { Button, Card, CenteredMessage, Divider, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { clinicConfig } from '@/features/appointments/clinic';
+import { nextWorkingDay } from '@/features/appointments/clinic';
 import { AppointmentCard, AppointmentChip } from '@/features/appointments/components';
 import { useAppointmentsRange } from '@/features/appointments/hooks';
 import type { Appointment } from '@/features/appointments/types';
+import { useClinicSession, type ClinicInfo } from '@/features/session/session-context';
 import { useIsWideLayout } from '@/hooks/use-is-wide-layout';
 import {
   addDays,
   formatDayLong,
   formatDayShort,
   formatRange,
-  isSunday,
   startOfWeek,
   todayKey,
 } from '@/lib/dates';
 
 /** Pazar günü açılırsa bir sonraki pazartesiyi göster. */
-function initialDay() {
-  const t = todayKey();
-  return isSunday(t) ? addDays(t, 1) : t;
+function initialDay(clinic: ClinicInfo) {
+  return nextWorkingDay(todayKey(), clinic);
 }
 
-function IconButton({ icon, label, onPress }: { icon: 'chevron-back' | 'chevron-forward'; label: string; onPress: () => void }) {
+function IconButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: 'chevron-back' | 'chevron-forward';
+  label: string;
+  onPress: () => void;
+}) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={styles.iconButton} hitSlop={6}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={styles.iconButton}
+      hitSlop={6}>
       <Ionicons name={icon} size={20} color={Colors.primary} />
     </Pressable>
   );
@@ -37,11 +49,13 @@ function IconButton({ icon, label, onPress }: { icon: 'chevron-back' | 'chevron-
 export default function CalendarScreen() {
   const router = useRouter();
   const isWide = useIsWideLayout();
-  const [selected, setSelected] = useState(initialDay);
+  const { clinic, can } = useClinicSession();
+  const canWrite = can('randevu.yaz');
+  const [selected, setSelected] = useState(() => initialDay(clinic));
   const weekStart = startOfWeek(selected);
   const days = useMemo(
-    () => Array.from({ length: clinicConfig.workingDays }, (_, i) => addDays(weekStart, i)),
-    [weekStart],
+    () => clinic.workingDays.map((d) => addDays(weekStart, d - 1)),
+    [weekStart, clinic.workingDays],
   );
   const weekEnd = days[days.length - 1];
   const { data, loading, error } = useAppointmentsRange(weekStart, weekEnd);
@@ -63,11 +77,15 @@ export default function CalendarScreen() {
     <Screen
       title="Takvim"
       subtitle={`${formatRange(weekStart, weekEnd)} · ${active.length} randevu${waiting ? ` · ${waiting} onay bekliyor` : ''}`}
-      headerRight={<Button label="Yeni randevu" icon="add" onPress={() => newAppointment(selected)} />}>
+      headerRight={
+        canWrite ? (
+          <Button label="Yeni randevu" icon="add" onPress={() => newAppointment(selected)} />
+        ) : null
+      }>
       <View style={styles.weekNav}>
         <IconButton icon="chevron-back" label="Önceki hafta" onPress={() => goWeek(-1)} />
         <Pressable
-          onPress={() => setSelected(initialDay())}
+          onPress={() => setSelected(initialDay(clinic))}
           accessibilityRole="button"
           style={styles.todayButton}>
           <Text style={styles.todayText}>Bugün</Text>
@@ -101,7 +119,7 @@ export default function CalendarScreen() {
                   ) : (
                     items.map((a) => <AppointmentChip key={a.id} appointment={a} />)
                   )}
-                  {d >= today ? (
+                  {canWrite && d >= today ? (
                     <Pressable
                       onPress={() => newAppointment(d)}
                       accessibilityRole="button"
@@ -119,7 +137,10 @@ export default function CalendarScreen() {
       ) : (
         /* Dar ekran: gün seçici + seçili günün listesi */
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.days}>
             {days.map((d) => {
               const isSelected = d === selected;
               const count = (byDay.get(d) ?? []).filter((a) => a.status !== 'iptal').length;
@@ -129,9 +150,17 @@ export default function CalendarScreen() {
                   onPress={() => setSelected(d)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isSelected }}
-                  style={[styles.day, isSelected && styles.daySelected, d === today && !isSelected && styles.dayToday]}>
-                  <Text style={[styles.dayLabel, isSelected && styles.onPrimary]}>{formatDayShort(d)}</Text>
-                  <Text style={[styles.dayCount, isSelected && styles.onPrimary]}>{count} randevu</Text>
+                  style={[
+                    styles.day,
+                    isSelected && styles.daySelected,
+                    d === today && !isSelected && styles.dayToday,
+                  ]}>
+                  <Text style={[styles.dayLabel, isSelected && styles.onPrimary]}>
+                    {formatDayShort(d)}
+                  </Text>
+                  <Text style={[styles.dayCount, isSelected && styles.onPrimary]}>
+                    {count} randevu
+                  </Text>
                 </Pressable>
               );
             })}
@@ -150,8 +179,13 @@ export default function CalendarScreen() {
                 </Fragment>
               ))
             )}
-            {selected >= today ? (
-              <Button label="Bu güne randevu ekle" icon="add" variant="secondary" onPress={() => newAppointment(selected)} />
+            {canWrite && selected >= today ? (
+              <Button
+                label="Bu güne randevu ekle"
+                icon="add"
+                variant="secondary"
+                onPress={() => newAppointment(selected)}
+              />
             ) : null}
           </Card>
         </>

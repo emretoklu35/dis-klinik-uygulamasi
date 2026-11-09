@@ -3,13 +3,22 @@
 Diş polikliniği yönetimi için iOS / Android uygulaması ve masaüstü web arayüzü.
 Expo SDK 58 + React Native + TypeScript + Expo Router.
 
-> Şu an yalnızca arayüz iskeleti vardır. Tüm içerik **sahte demo verisidir** (`src/data/demo.ts`).
-> Veritabanı, giriş sistemi ve gerçek hasta bilgisi henüz yoktur.
+> Uygulama **yerel** Supabase'e bağlıdır (giriş, hastalar, randevular, görevler).
+> Tüm içerik **sahte demo verisidir** (`supabase/seed.sql`). Bulut projesi ve gerçek hasta verisi yoktur.
 
 ## Başlatma
 
+İlk kurulumda:
+1. Docker Desktop'ı açın.
+2. `npm install`
+3. `npm run db:start` (yerel Supabase)
+4. `.env.example` dosyasını `.env.local` olarak kopyalayın; `npm run db:status` çıktısındaki
+   API URL ve **Publishable** anahtarı yazın. (Secret anahtar asla yazılmaz.)
+5. Uygulamayı başlatın ve demo hesaplardan biriyle giriş yapın
+   (`sahip.hekim@demo.test`, `hekim@demo.test`, `yonetici@demo.test`, `resepsiyon@demo.test`;
+   yerel test şifresi `supabase/seed.sql` içinde).
+
 ```bash
-npm install          # ilk kurulumda
 npm run web          # tarayıcıda açar (http://localhost:8081)
 npm start            # QR kodu gösterir; telefonda Expo Go ile tarayın
 npm run ios          # iOS Simülatörü (Mac + Xcode gerekir)
@@ -33,6 +42,7 @@ npm run db:start     # yerel Supabase'i başlatır (ilk seferde imajları indiri
 npm run db:reset     # şemayı (migrations) ve sahte veriyi (seed.sql) baştan kurar
 npm run db:test      # RLS ve iş kuralı testlerini (pgTAP) çalıştırır
 npm run db:status    # yerel adresleri gösterir (Studio: http://localhost:54323)
+npm run db:types     # şema değişince TypeScript tiplerini yeniden üretir
 npm run db:stop      # durdurur (veriyi silmez)
 ```
 

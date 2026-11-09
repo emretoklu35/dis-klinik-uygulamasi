@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
 import type { Appointment } from './types';
-import { startTime, statusLabels, statusTone, timeRange } from './utils';
+import { appointmentTitle, startTime, statusLabels, statusTone, timeRange } from './utils';
 
 export function StatusBadge({ appointment }: { appointment: Appointment }) {
   return <Badge label={statusLabels[appointment.status]} tone={statusTone[appointment.status]} />;
@@ -34,8 +34,8 @@ export function AppointmentCard({
                 {a.patientName}
               </Text>
               <Text style={styles.meta} numberOfLines={2}>
-                {a.procedure}
-                {showDoctor ? ` · ${a.doctor}` : ''} · {a.chair}
+                {appointmentTitle(a)}
+                {showDoctor ? ` · ${a.doctorName}` : ''} · {a.chairName}
               </Text>
             </View>
             <StatusBadge appointment={a} />
@@ -58,15 +58,23 @@ export function AppointmentChip({ appointment: a }: { appointment: Appointment }
   }[a.status];
   return (
     <Link href={{ pathname: '/takvim/[id]', params: { id: a.id } }} withAnchor asChild>
-      <Pressable accessibilityRole="link" accessibilityLabel={`${timeRange(a)} ${a.patientName}, ${statusLabels[a.status]}`}>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={`${timeRange(a)} ${a.patientName}, ${statusLabels[a.status]}`}>
         {({ pressed }) => (
-          <View style={[styles.chip, { borderLeftColor: tone }, pressed && styles.pressed, cancelled && styles.cancelled]}>
+          <View
+            style={[
+              styles.chip,
+              { borderLeftColor: tone },
+              pressed && styles.pressed,
+              cancelled && styles.cancelled,
+            ]}>
             <Text style={styles.chipTime}>{timeRange(a)}</Text>
             <Text style={[styles.chipName, cancelled && styles.strike]} numberOfLines={1}>
               {a.patientName}
             </Text>
             <Text style={styles.chipMeta} numberOfLines={1}>
-              {a.procedure}
+              {appointmentTitle(a)}
             </Text>
           </View>
         )}

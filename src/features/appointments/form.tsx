@@ -8,59 +8,69 @@ import { PatientAvatar } from '@/features/patients/components';
 import { usePatientList } from '@/features/patients/hooks';
 import { fullName } from '@/features/patients/utils';
 import {
-  addDays,
+  useClinicSession,
+  type ClinicInfo,
+  type StaffRef,
+} from '@/features/session/session-context';
+import {
   formatDateInput,
   formatDayLong,
   formatDayShort,
-  isSunday,
   localDateTime,
   parseDateInput,
   todayKey,
 } from '@/lib/dates';
 
-import { clinicConfig, durationOptions, procedureSuggestions, timeSlots } from './clinic';
+import {
+  durationOptions,
+  isWorkingDay,
+  nextWorkingDay,
+  nextWorkingDays,
+  procedureSuggestions,
+  timeSlots,
+  visitTypeLabels,
+} from './clinic';
 import { useAppointmentsRange } from './hooks';
 import { conflictMessage, findConflicts, scheduleError } from './rules';
-import type { AppointmentInput } from './types';
+import type { AppointmentInput, VisitType } from './types';
 
 export type AppointmentFormValues = {
   patient: { id: string; name: string } | null;
   date: string; // gün anahtarı
   time: string | null;
   durationMin: number;
-  doctor: string;
-  chair: string;
+  visitType: VisitType;
+  doctorMemberId: string;
+  chairId: string;
+  deskNote: string;
+  /** Yalnızca hekim */
   procedure: string;
-  note: string;
+  /** Yalnızca hekim */
+  clinicalNote: string;
 };
 
-export function emptyAppointmentForm(overrides: Partial<AppointmentFormValues> = {}): AppointmentFormValues {
-  const t = todayKey();
+export function emptyAppointmentForm(
+  ctx: { clinic: ClinicInfo; doctors: StaffRef[]; chairs: StaffRef[]; member: StaffRef },
+  overrides: Partial<AppointmentFormValues> = {},
+): AppointmentFormValues {
+  // Formu açan kişi hekimse varsayılan hekim kendisi olsun.
+  const me = ctx.doctors.find((d) => d.id === ctx.member.id);
   return {
     patient: null,
-    date: isSunday(t) ? addDays(t, 1) : t,
+    date: nextWorkingDay(todayKey(), ctx.clinic),
     time: null,
     durationMin: 30,
-    doctor: clinicConfig.doctors[0],
-    chair: clinicConfig.chairs[0],
+    visitType: 'muayene',
+    doctorMemberId: (me ?? ctx.doctors[0])?.id ?? '',
+    chairId: ctx.chairs[0]?.id ?? '',
+    deskNote: '',
     procedure: '',
-    note: '',
+    clinicalNote: '',
     ...overrides,
   };
 }
 
-/** Bugünden itibaren sıradaki çalışma günleri (pazar hariç). */
-function nextWorkingDays(count: number) {
-  const out: string[] = [];
-  let d = todayKey();
-  while (out.length < count) {
-    if (!isSunday(d)) out.push(d);
-    d = addDays(d, 1);
-  }
-  return out;
-}
-
-type Errors = Partial<Record<'patient' | 'date' | 'time' | 'procedure' | 'form', string>>;
+type Errors = Partial<Record<'patient' | 'date' | 'time' | 'doctor' | 'form', string>>;
 
 function PatientPicker({
   value,
@@ -135,11 +145,14 @@ export function AppointmentForm({
   onSubmit: (input: AppointmentInput) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { clinic, doctors, chairs, can } = useClinicSession();
+  const isClinician = can('tedavi.yaz');
   const [v, setV] = useState(initial);
   const [dateText, setDateText] = useState(formatDateInput(initial.date));
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
   const { data: dayAppointments } = useAppointmentsRange(v.date, v.date);
+  const slots = useMemo(() => timeSlots(clinic), [clinic]);
 
   const set = <K extends keyof AppointmentFormValues>(key: K, value: AppointmentFormValues[K]) => {
     setV((prev) => ({ ...prev, [key]: value }));
@@ -154,36 +167,48 @@ export function AppointmentForm({
   // Her saat için: seçili hekim/koltuk/süreyle uygun mu?
   const slotProblems = useMemo(() => {
     const map = new Map<string, string>();
-    for (const t of timeSlots()) {
+    for (const t of slots) {
       const start = localDateTime(v.date, t);
-      const schedule = scheduleError({ start, durationMin: v.durationMin }, { allowPast: start === originalStart });
+      const schedule = scheduleError({ start, durationMin: v.durationMin }, clinic, {
+        allowPast: start === originalStart,
+      });
       if (schedule) {
         map.set(t, schedule);
         continue;
       }
       const conflicts = findConflicts(
-        { start, durationMin: v.durationMin, doctor: v.doctor, chair: v.chair },
+        { start, durationMin: v.durationMin, doctorMemberId: v.doctorMemberId, chairId: v.chairId },
         dayAppointments,
         editingId,
       );
       if (conflicts.length > 0) map.set(t, conflictMessage(conflicts[0]));
     }
     return map;
-  }, [v.date, v.durationMin, v.doctor, v.chair, dayAppointments, editingId, originalStart]);
+  }, [
+    slots,
+    v.date,
+    v.durationMin,
+    v.doctorMemberId,
+    v.chairId,
+    dayAppointments,
+    editingId,
+    originalStart,
+    clinic,
+  ]);
 
   const selectedProblem = v.time ? slotProblems.get(v.time) : undefined;
-  const freeCount = timeSlots().length - slotProblems.size;
-  const quickDays = nextWorkingDays(6);
+  const freeCount = slots.length - slotProblems.size;
+  const quickDays = nextWorkingDays(6, clinic);
 
   const submit = async () => {
     const e: Errors = {};
     if (!v.patient) e.patient = 'Hasta seçin.';
     const parsed = parseDateInput(dateText);
     if (!parsed) e.date = 'GG.AA.YYYY biçiminde geçerli bir tarih girin.';
-    else if (isSunday(parsed)) e.date = 'Pazar günü klinik kapalı.';
+    else if (!isWorkingDay(parsed, clinic)) e.date = 'Klinik bu gün kapalı.';
+    if (!v.doctorMemberId) e.doctor = 'Hekim seçin.';
     if (!v.time) e.time = 'Saat seçin.';
     else if (selectedProblem) e.time = selectedProblem;
-    if (!v.procedure.trim()) e.procedure = 'Yapılacak işlemi yazın.';
     setErrors(e);
     if (Object.keys(e).length > 0 || !v.patient || !v.time) return;
 
@@ -191,13 +216,18 @@ export function AppointmentForm({
     try {
       await onSubmit({
         patientId: v.patient.id,
-        patientName: v.patient.name,
         start: localDateTime(v.date, v.time),
         durationMin: v.durationMin,
-        doctor: v.doctor,
-        chair: v.chair,
-        procedure: v.procedure.trim(),
-        note: v.note.trim() || undefined,
+        visitType: v.visitType,
+        doctorMemberId: v.doctorMemberId,
+        chairId: v.chairId,
+        deskNote: v.deskNote.trim() || undefined,
+        clinical: isClinician
+          ? {
+              procedure: v.procedure.trim() || undefined,
+              clinicalNote: v.clinicalNote.trim() || undefined,
+            }
+          : undefined,
       });
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : 'Randevu kaydedilemedi.' });
@@ -205,18 +235,69 @@ export function AppointmentForm({
     }
   };
 
+  if (doctors.length === 0 || chairs.length === 0) {
+    return (
+      <Card>
+        <Text style={styles.error}>
+          Randevu verebilmek için klinikte en az bir aktif hekim ve bir koltuk tanımlı olmalı.
+        </Text>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card title="Hasta">
-        <PatientPicker value={v.patient} onChange={(p) => set('patient', p)} error={errors.patient} />
+        <PatientPicker
+          value={v.patient}
+          onChange={(p) => set('patient', p)}
+          error={errors.patient}
+        />
+      </Card>
+
+      <Card title="Randevu">
+        <Segmented
+          label="Tür"
+          value={v.visitType}
+          options={(Object.keys(visitTypeLabels) as VisitType[]).map((t) => ({
+            value: t,
+            label: visitTypeLabels[t],
+          }))}
+          onChange={(t) => set('visitType', t)}
+        />
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <Segmented
+              label="Hekim"
+              value={v.doctorMemberId}
+              options={doctors.map((d) => ({ value: d.id, label: d.name }))}
+              onChange={(d) => set('doctorMemberId', d)}
+            />
+            {errors.doctor ? <Text style={styles.error}>{errors.doctor}</Text> : null}
+          </View>
+          <View style={styles.col}>
+            <Segmented
+              label="Koltuk"
+              value={v.chairId}
+              options={chairs.map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(c) => set('chairId', c)}
+            />
+          </View>
+        </View>
+        <Segmented
+          label="Süre"
+          value={String(v.durationMin)}
+          options={durationOptions.map((m) => ({ value: String(m), label: `${m} dk` }))}
+          onChange={(m) => set('durationMin', Number(m))}
+        />
       </Card>
 
       <Card title="Tarih ve saat">
         <View style={styles.chips}>
-          {quickDays.map((d, i) => (
+          {quickDays.map((d) => (
             <Chip
               key={d}
-              label={i === 0 && d === todayKey() ? 'Bugün' : formatDayShort(d)}
+              label={d === todayKey() ? 'Bugün' : formatDayShort(d)}
               selected={v.date === d}
               onPress={() => pickDate(d)}
             />
@@ -238,38 +319,12 @@ export function AppointmentForm({
           maxLength={10}
         />
 
-        <View style={styles.row}>
-          <View style={styles.col}>
-            <Segmented
-              label="Hekim"
-              value={v.doctor}
-              options={clinicConfig.doctors.map((d) => ({ value: d, label: d }))}
-              onChange={(d) => set('doctor', d)}
-            />
-          </View>
-          <View style={styles.col}>
-            <Segmented
-              label="Koltuk"
-              value={v.chair}
-              options={clinicConfig.chairs.map((c) => ({ value: c, label: c }))}
-              onChange={(c) => set('chair', c)}
-            />
-          </View>
-        </View>
-
-        <Segmented
-          label="Süre"
-          value={String(v.durationMin)}
-          options={durationOptions.map((m) => ({ value: String(m), label: `${m} dk` }))}
-          onChange={(m) => set('durationMin', Number(m))}
-        />
-
         <View style={{ gap: 6 }}>
           <Text style={styles.label}>
             Saat <Text style={styles.labelHint}>· {freeCount} uygun saat</Text>
           </Text>
           <View style={styles.chips}>
-            {timeSlots().map((t) => {
+            {slots.map((t) => {
               const problem = slotProblems.get(t);
               return (
                 <Chip
@@ -291,28 +346,48 @@ export function AppointmentForm({
         </View>
       </Card>
 
-      <Card title="İşlem">
-        <View style={styles.chips}>
-          {procedureSuggestions.map((p) => (
-            <Chip key={p} label={p} selected={v.procedure === p} onPress={() => set('procedure', p)} />
-          ))}
-        </View>
+      <Card title="Notlar">
         <TextField
-          label="Yapılacak işlem"
-          required
-          value={v.procedure}
-          onChangeText={(t) => set('procedure', t)}
-          error={errors.procedure}
-          placeholder="Öneriden seçin ya da yazın"
-        />
-        <TextField
-          label="Not"
-          value={v.note}
-          onChangeText={(t) => set('note', t)}
+          label="İdari not"
+          value={v.deskNote}
+          onChangeText={(t) => set('deskNote', t)}
           placeholder="Ör. Hasta sabah saatlerini tercih ediyor"
+          hint="Tüm personel görür. Sağlıkla ilgili bilgi yazmayın."
           multiline
         />
       </Card>
+
+      {isClinician ? (
+        <Card title="İşlem ayrıntısı (yalnızca hekim)">
+          <View style={styles.chips}>
+            {procedureSuggestions.map((p) => (
+              <Chip
+                key={p}
+                label={p}
+                selected={v.procedure === p}
+                onPress={() => set('procedure', p)}
+              />
+            ))}
+          </View>
+          <TextField
+            label="İşlem"
+            value={v.procedure}
+            onChangeText={(t) => set('procedure', t)}
+            placeholder="Öneriden seçin ya da yazın"
+          />
+          <TextField
+            label="Klinik not"
+            value={v.clinicalNote}
+            onChangeText={(t) => set('clinicalNote', t)}
+            placeholder="Yalnızca hekimlerin göreceği not"
+            multiline
+          />
+        </Card>
+      ) : (
+        <Text style={styles.hint}>
+          İşlem ayrıntısını hekim girer; resepsiyon yalnızca genel türü görür.
+        </Text>
+      )}
 
       {errors.form ? (
         <View style={styles.formError}>
@@ -323,7 +398,12 @@ export function AppointmentForm({
 
       <View style={styles.actions}>
         <Button label="Vazgeç" variant="secondary" onPress={onCancel} disabled={saving} />
-        <Button label={saving ? 'Kaydediliyor…' : submitLabel} icon="checkmark" onPress={submit} disabled={saving} />
+        <Button
+          label={saving ? 'Kaydediliyor…' : submitLabel}
+          icon="checkmark"
+          onPress={submit}
+          disabled={saving}
+        />
       </View>
     </>
   );
@@ -332,7 +412,7 @@ export function AppointmentForm({
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.lg },
-  col: { flexGrow: 1, flexBasis: 260 },
+  col: { flexGrow: 1, flexBasis: 260, gap: 4 },
   label: { fontSize: 14, fontWeight: '600', color: Colors.text },
   labelHint: { fontWeight: '400', color: Colors.textMuted },
   hint: { fontSize: 12, color: Colors.textMuted },
@@ -346,7 +426,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
   },
-  searchInput: { flex: 1, paddingVertical: Spacing.md, fontSize: 15, color: Colors.text, minHeight: 44 },
+  searchInput: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    fontSize: 15,
+    color: Colors.text,
+    minHeight: 44,
+  },
   results: { gap: 2 },
   result: {
     flexDirection: 'row',

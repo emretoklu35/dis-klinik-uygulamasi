@@ -34,12 +34,12 @@ export function PatientListItem({ patient }: { patient: PatientSummary }) {
                 <Text style={styles.name} numberOfLines={1}>
                   {fullName(patient)}
                 </Text>
-                {patient.hasAllergy ? (
+                {patient.hasAllergyAlert ? (
                   <Ionicons
                     name="warning"
                     size={14}
                     color={Colors.danger}
-                    accessibilityLabel="Alerjisi var"
+                    accessibilityLabel="Alerji kaydı var"
                   />
                 ) : null}
               </View>
@@ -47,9 +47,10 @@ export function PatientListItem({ patient }: { patient: PatientSummary }) {
                 {patient.phone} · Son ziyaret: {formatDate(patient.lastVisit)}
               </Text>
               {patient.nextAppointment ? (
-                <Badge label={`Randevu: ${formatDateTime(patient.nextAppointment)}`} tone="primary" />
-              ) : patient.activeTreatments > 0 ? (
-                <Badge label={`${patient.activeTreatments} açık tedavi`} tone="warning" />
+                <Badge
+                  label={`Randevu: ${formatDateTime(patient.nextAppointment)}`}
+                  tone="primary"
+                />
               ) : null}
             </View>
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />

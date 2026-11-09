@@ -20,7 +20,17 @@ export type Treatment = {
   date: string; // gün anahtarı
   procedure: string;
   tooth?: string;
+  doctorMemberId: string;
   doctorName: string;
+  status: TreatmentStatus;
+  note?: string;
+};
+
+/** Tedavi ekleme/düzenleme girdisi (yalnızca hekim). */
+export type TreatmentInput = {
+  date: string; // gün anahtarı
+  procedure: string;
+  tooth?: string;
   status: TreatmentStatus;
   note?: string;
 };

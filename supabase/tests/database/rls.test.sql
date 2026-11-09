@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(35);
+select plan(39);
 
 -- Kısaltmalar ------------------------------------------------------------------
 -- Kullanıcılar: a..1 sahip+hekim, a..2 hekim, a..3 yönetici, a..4 resepsiyon
@@ -55,6 +55,15 @@ select throws_ok(
     ('b0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'hekim')$$,
   '42501', null, 'Resepsiyon rol atayamaz');
 select is_empty('select * from audit_log', 'Resepsiyon denetim kaydını göremez');
+select throws_ok(
+  $$insert into treatments (clinic_id, patient_id, doctor_member_id, performed_on, procedure)
+    values ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002',
+            'b0000000-0000-4000-8000-000000000002', current_date, 'Dolgu')$$,
+  '42501', null, 'Resepsiyon tedavi kaydı ekleyemez');
+select throws_ok(
+  $$insert into patient_medical (patient_id, clinic_id, allergies)
+    values ('e0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', '{Aspirin}')$$,
+  '42501', null, 'Resepsiyon sağlık bilgisi giremez');
 
 -- ============================ YÖNETİCİ =======================================
 set local request.jwt.claims = '{"sub":"a0000000-0000-4000-8000-000000000003","role":"authenticated"}';
@@ -74,6 +83,9 @@ select lives_ok(
     ('b0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'yonetici')$$,
   'Yönetici yönetici rolü atayabilir');
 select isnt_empty('select * from audit_log', 'Yönetici denetim kaydını görür');
+select results_eq(
+  $$with u as (update patient_medical set allergies = '{}' returning 1) select count(*)::int from u$$,
+  array[0], 'Yönetici sağlık bilgisini değiştiremez (hiçbir satır etkilenmez)');
 
 -- ============================ HEKİM ==========================================
 set local request.jwt.claims = '{"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated"}';
@@ -87,6 +99,11 @@ select lives_ok(
   'Hekim alerji bilgisini güncelleyebilir');
 select is((select has_allergy_alert from patients where id = 'e0000000-0000-4000-8000-000000000001'), false,
   'Alerji silinince işaret tetikleyiciyle kalkar');
+select lives_ok(
+  $$insert into treatments (clinic_id, patient_id, doctor_member_id, performed_on, procedure, tooth, status)
+    values ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002',
+            'b0000000-0000-4000-8000-000000000002', current_date, 'Dolgu', '26', 'tamamlandi')$$,
+  'Hekim tedavi kaydı ekleyebilir');
 select throws_ok(
   $$insert into appointments (clinic_id, patient_id, doctor_member_id, chair_id, starts_at, ends_at, visit_type)
     select clinic_id, patient_id, doctor_member_id, chair_id, starts_at, ends_at, visit_type

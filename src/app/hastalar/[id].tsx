@@ -3,37 +3,18 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import {
-  Badge,
-  Button,
-  Card,
-  CenteredMessage,
-  Divider,
-  Grid,
-  gridItem,
-  Screen,
-} from '@/components/ui';
+import { Button, Card, CenteredMessage, Divider, Grid, gridItem, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { AppointmentCard } from '@/features/appointments/components';
 import { usePatientAppointments } from '@/features/appointments/hooks';
 import { isActive } from '@/features/appointments/utils';
 import { PatientAvatar } from '@/features/patients/components';
 import { usePatient } from '@/features/patients/hooks';
-import type { Patient, TreatmentStatus } from '@/features/patients/types';
-import {
-  ageFrom,
-  formatDate,
-  fullName,
-  genderLabels,
-  treatmentStatusLabels,
-} from '@/features/patients/utils';
+import { MedicalCard } from '@/features/patients/medical-card';
+import { TreatmentsCard } from '@/features/patients/treatments-card';
+import type { Patient } from '@/features/patients/types';
+import { ageFrom, formatDate, fullName, genderLabels } from '@/features/patients/utils';
 import { formatDayLong, nowLocalDateTime } from '@/lib/dates';
-
-const statusTone: Record<TreatmentStatus, 'primary' | 'warning' | 'success'> = {
-  planlandi: 'primary',
-  devam: 'warning',
-  tamamlandi: 'success',
-};
 
 function InfoRow({
   icon,
@@ -105,11 +86,6 @@ function HealthBlock({ patient }: { patient: Patient }) {
           </Text>
         </View>
       )}
-      {m.clinicalNotes ? (
-        <Card title="Klinik not (yalnızca hekim)">
-          <Text style={styles.notes}>{m.clinicalNotes}</Text>
-        </Card>
-      ) : null}
     </>
   );
 }
@@ -117,10 +93,11 @@ function HealthBlock({ patient }: { patient: Patient }) {
 export default function PatientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: patient, loading, error } = usePatient(id);
+  const { data: patient, loading, error, reload } = usePatient(id);
   const { data: appointments } = usePatientAppointments(id);
 
-  if (loading) {
+  // Yalnızca ilk yüklemede tam ekran bekleme; kayıttan sonra yenilerken kart yerinde kalır.
+  if (loading && !patient) {
     return (
       <Screen inStack>
         <ActivityIndicator color={Colors.primary} style={{ paddingVertical: Spacing.xxl }} />
@@ -151,7 +128,6 @@ export default function PatientDetailScreen() {
   const now = nowLocalDateTime();
   const upcoming = appointments.filter((a) => isActive(a) && a.start >= now);
   const lastPast = appointments.filter((a) => a.start < now && a.status === 'tamamlandi').at(-1);
-  const treatments = patient.treatments;
 
   return (
     <Screen inStack>
@@ -175,6 +151,7 @@ export default function PatientDetailScreen() {
 
       {/* Sağlık uyarısı: tedavi öncesi görünür olmalı */}
       <HealthBlock patient={patient} />
+      <MedicalCard patient={patient} onSaved={reload} />
 
       <Grid>
         <Card title="İletişim" style={gridItem}>
@@ -223,32 +200,8 @@ export default function PatientDetailScreen() {
         </Card>
       </Grid>
 
-      {treatments ? (
-        <Card title="Tedavi geçmişi">
-          {treatments.length === 0 ? (
-            <Text style={styles.empty}>Henüz tedavi kaydı yok.</Text>
-          ) : (
-            treatments.map((t, i) => (
-              <Fragment key={t.id}>
-                {i > 0 && <Divider />}
-                <View style={styles.treatment}>
-                  <View style={styles.treatmentDate}>
-                    <Text style={styles.treatmentDateText}>{formatDate(t.date)}</Text>
-                  </View>
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={styles.treatmentTitle}>
-                      {t.procedure}
-                      {t.tooth ? <Text style={styles.tooth}> · Diş {t.tooth}</Text> : null}
-                    </Text>
-                    <Text style={styles.sub}>{t.doctorName}</Text>
-                  </View>
-                  <Badge label={treatmentStatusLabels[t.status]} tone={statusTone[t.status]} />
-                </View>
-              </Fragment>
-            ))
-          )}
-        </Card>
-      ) : null}
+      {/* Yalnızca hekim: veritabanından gelmezse kartlar hiç çizilmez */}
+      <TreatmentsCard patient={patient} onSaved={reload} />
 
       <Card title="İdari not">
         <Text style={patient.adminNote ? styles.notes : styles.empty}>

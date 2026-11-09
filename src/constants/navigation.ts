@@ -17,5 +17,6 @@ export const NavItems: NavItem[] = [
   { name: 'hastalar', title: 'Hastalar', icon: 'people-outline', activeIcon: 'people' },
   { name: 'takvim', title: 'Takvim', icon: 'calendar-outline', activeIcon: 'calendar' },
   { name: 'gorevler', title: 'Görevler', icon: 'checkbox-outline', activeIcon: 'checkbox' },
+  { name: 'stok', title: 'Stok', icon: 'cube-outline', activeIcon: 'cube' },
   { name: 'ayarlar', title: 'Ayarlar', icon: 'settings-outline', activeIcon: 'settings' },
 ];

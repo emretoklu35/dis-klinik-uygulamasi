@@ -60,6 +60,10 @@ Roller ve yetkiler: `sahip`, `yonetici`, `hekim`, `resepsiyonist`, `asistan`. Bi
 hekim ve desk görür; hekim/desk/yönetici fiyat ve tutar değiştirebilir (kim, ne zaman, eski → yeni,
 sebep görünür). Kayıtlar silinmez; yalnızca sahip sebebiyle iptal eder. Tutarlar kuruş cinsinden tutulur.
 Bu bir tahsilat takibi; resmi fatura/e-Arşiv yerine geçmez.
+Stok (Stok sekmesi): malzeme kartları ve hareketler (giriş, kullanım, sayım, fire). Miktar hareketlerin
+toplamıdır; hareketler değiştirilemez, stok eksiye düşemez. Anestezik/dolgu/implantta parti ve son
+kullanma tarihi zorunlu. Kritik seviye ve son kullanma uyarıları Ana Sayfa'da; sipariş listesi paylaşılabilir.
+Giriş: desk/sahip/yönetici · Kullanım/sayım/fire: asistan/hekim/sahip/yönetici · Maliyet: sahip/yönetici.
 Asistan röntgen/fotoğraf yükler ama görüntüleri göremez; hekim inceler, gerekirse sebebiyle tekrar
 çekim ister ve istek asistanın Ana Sayfa'sında ve hasta kartında görünür.
 Sağlık ayrıntıları ve tedavi bilgisi yalnızca `hekim` rolüne açıktır; resepsiyon yalnızca

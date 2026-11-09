@@ -429,6 +429,72 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"stock_costs": {
+                  Row: {
+                    "clinic_id": string,"movement_id": string,"unit_cost": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"movement_id": string,"unit_cost": number
+                  }
+                  Update: {
+                    "clinic_id"?: string,"movement_id"?: string,"unit_cost"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_costs_clinic_id_movement_id_fkey"
+      columns: ["clinic_id","movement_id"]
+isOneToOne: false
+      referencedRelation: "stock_movements"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"stock_items": {
+                  Row: {
+                    "active": boolean,"barcode": string | null,"category": Database["public"]['Enums']["stock_category"],"clinic_id": string,"created_at": string,"id": string,"min_level": number,"name": string,"pack_name": string | null,"pack_size": number,"supplier": string | null,"track_lots": boolean,"unit": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"barcode"?: string | null,"category"?: Database["public"]['Enums']["stock_category"],"clinic_id": string,"created_at"?: string,"id"?: string,"min_level"?: number,"name": string,"pack_name"?: string | null,"pack_size"?: number,"supplier"?: string | null,"track_lots"?: boolean,"unit"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "active"?: boolean,"barcode"?: string | null,"category"?: Database["public"]['Enums']["stock_category"],"clinic_id"?: string,"created_at"?: string,"id"?: string,"min_level"?: number,"name"?: string,"pack_name"?: string | null,"pack_size"?: number,"supplier"?: string | null,"track_lots"?: boolean,"unit"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_items_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"stock_movements": {
+                  Row: {
+                    "clinic_id": string,"counted_quantity": number | null,"created_at": string,"created_by": string | null,"expiry_date": string | null,"id": string,"item_id": string,"kind": Database["public"]['Enums']["stock_movement_kind"],"lot_no": string | null,"note": string | null,"quantity": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"counted_quantity"?: number | null,"created_at"?: string,"created_by"?: string | null,"expiry_date"?: string | null,"id"?: string,"item_id": string,"kind": Database["public"]['Enums']["stock_movement_kind"],"lot_no"?: string | null,"note"?: string | null,"quantity": number
+                  }
+                  Update: {
+                    "clinic_id"?: string,"counted_quantity"?: number | null,"created_at"?: string,"created_by"?: string | null,"expiry_date"?: string | null,"id"?: string,"item_id"?: string,"kind"?: Database["public"]['Enums']["stock_movement_kind"],"lot_no"?: string | null,"note"?: string | null,"quantity"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_movements_clinic_id_item_id_fkey"
+      columns: ["clinic_id","item_id"]
+isOneToOne: false
+      referencedRelation: "stock_items"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "stock_movements_clinic_id_item_id_fkey"
+      columns: ["clinic_id","item_id"]
+isOneToOne: false
+      referencedRelation: "stock_levels"
+      referencedColumns: ["clinic_id","item_id"]
+    }
+                  ]
                 },"tasks": {
                   Row: {
                     "assignee_member_id": string | null,"clinic_id": string,"created_at": string,"created_by": string | null,"done_at": string | null,"due_date": string | null,"id": string,"priority": Database["public"]['Enums']["task_priority"],"title": string
@@ -510,13 +576,53 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"stock_levels": {
+                  Row: {
+                    "clinic_id": string,"item_id": string,"quantity": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "clinic_id"?: string | null,"item_id"?: string | null,"quantity"?: never
+                         }
+                        Update: {
+                           "clinic_id"?: string | null,"item_id"?: string | null,"quantity"?: never
+                         }
+                        Relationships: [
+                    {
+      foreignKeyName: "stock_items_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"stock_lots": {
+                  Row: {
+                    "clinic_id": string,"expiry_date": string | null,"item_id": string,"lot_no": string | null,"quantity": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_movements_clinic_id_item_id_fkey"
+      columns: ["clinic_id","item_id"]
+isOneToOne: false
+      referencedRelation: "stock_items"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "stock_movements_clinic_id_item_id_fkey"
+      columns: ["clinic_id","item_id"]
+isOneToOne: false
+      referencedRelation: "stock_levels"
+      referencedColumns: ["clinic_id","item_id"]
+    }
+                  ]
                 }
           }
           Functions: {
             [_ in never]: never
           }
           Enums: {
-            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"
+            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","stock_category": "sarf"|"anestezik"|"dolgu"|"implant"|"frez_alet"|"sterilizasyon"|"ortodonti"|"diger","stock_movement_kind": "giris"|"kullanim"|"sayim"|"fire","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -636,7 +742,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol"]
+            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"stock_category": ["sarf", "anestezik", "dolgu", "implant", "frez_alet", "sterilizasyon", "ortodonti", "diger"],"stock_movement_kind": ["giris", "kullanim", "sayim", "fire"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol"]
           }
         }
 } as const

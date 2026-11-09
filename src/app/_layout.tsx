@@ -52,7 +52,7 @@ function AppTabs() {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
         sceneStyle: { backgroundColor: Colors.background },
       }}>
       {NavItems.map((item) => (

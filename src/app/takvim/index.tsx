@@ -15,12 +15,22 @@ import {
   addDays,
   formatDayLong,
   formatDayShort,
+  isoWeekday,
   formatRange,
   startOfWeek,
   todayKey,
 } from '@/lib/dates';
 
 /** Pazar günü açılırsa bir sonraki pazartesiyi göster. */
+const weekdayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+
+/** Seçili güne göre: "Bugüne…", "Yarına…", ya da "Perşembe gününe randevu ekle". */
+function addButtonLabel(selected: string, today: string) {
+  if (selected === today) return 'Bugüne randevu ekle';
+  if (selected === addDays(today, 1)) return 'Yarına randevu ekle';
+  return `${weekdayNames[isoWeekday(selected) - 1]} gününe randevu ekle`;
+}
+
 function initialDay(clinic: ClinicInfo) {
   return nextWorkingDay(todayKey(), clinic);
 }
@@ -181,7 +191,7 @@ export default function CalendarScreen() {
             )}
             {canWrite && selected >= today ? (
               <Button
-                label="Bu güne randevu ekle"
+                label={addButtonLabel(selected, today)}
                 icon="add"
                 variant="secondary"
                 onPress={() => newAppointment(selected)}

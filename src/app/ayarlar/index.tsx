@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import { useState } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 
+import { useRouter } from 'expo-router';
+
 import { Button, Card, Divider, Screen } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { roleLabels, useClinicSession, useSession } from '@/features/session/session-context';
@@ -48,8 +50,9 @@ function workingDaysLabel(days: number[]) {
 }
 
 export default function SettingsScreen() {
-  const { clinic, doctors, chairs, member, email, roles } = useClinicSession();
+  const { clinic, doctors, chairs, member, email, roles, can } = useClinicSession();
   const { signOut } = useSession();
+  const router = useRouter();
   const [reminders, setReminders] = useState(true);
   const [dailySummary, setDailySummary] = useState(false);
 
@@ -67,6 +70,23 @@ export default function SettingsScreen() {
           value={`${workingDaysLabel(clinic.workingDays)} ${minutesToTime(clinic.openMin)} – ${minutesToTime(clinic.closeMin)}`}
         />
       </Card>
+
+      {can('odeme.oku') ? (
+        <Card title="Fiyat listesi">
+          <Text style={styles.hint}>
+            Tedavi fiyatları. Hekim ve desk değiştirebilir; her değişiklikte kimin, ne zaman, eski
+            ve yeni fiyatı görünür.
+          </Text>
+          <View style={styles.signOut}>
+            <Button
+              label="Fiyat listesini aç"
+              icon="pricetags-outline"
+              variant="secondary"
+              onPress={() => router.push('/ayarlar/fiyatlar')}
+            />
+          </View>
+        </Card>
+      ) : null}
 
       <Card title="Hesabım">
         <InfoRow label="Ad" value={member.name} />

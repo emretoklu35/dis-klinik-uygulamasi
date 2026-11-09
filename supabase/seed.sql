@@ -154,3 +154,25 @@ insert into public.tasks (clinic_id, title, due_date, priority, done_at) values
   ('c0000000-0000-4000-8000-000000000001', 'Sterilizasyon cihazı haftalık kontrolü',             current_date,     'yuksek', null),
   ('c0000000-0000-4000-8000-000000000001', 'Sarf malzeme siparişini gözden geçir',               current_date + 1, 'normal', null),
   ('c0000000-0000-4000-8000-000000000001', 'Laboratuvara ölçü gönderimi',                         current_date + 3, 'normal', now());
+
+-- Fiyat listesi (SAHTE tutarlar, kuruş cinsinden: 150000 = 1.500,00 TL)
+insert into public.price_list_items (id, clinic_id, name, amount, updated_by) values
+  ('f0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 'Kontrol muayenesi',  50000, null),
+  ('f0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'Diş taşı temizliği', 150000, null),
+  ('f0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'Dolgu',              250000, null),
+  ('f0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'Kanal tedavisi',     600000, null),
+  ('f0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'Diş çekimi',         200000, null),
+  ('f0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'Panoramik röntgen',   75000, null),
+  ('f0000000-0000-4000-8000-000000000007', 'c0000000-0000-4000-8000-000000000001', 'İmplant',           2500000, null),
+  ('f0000000-0000-4000-8000-000000000008', 'c0000000-0000-4000-8000-000000000001', 'Kron (zirkonyum)',   900000, null);
+
+-- Örnek borç ve tahsilatlar (SAHTE)
+insert into public.patient_charges (clinic_id, patient_id, price_item_id, description, tooth, amount, adjust_note, created_by) values
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'f0000000-0000-4000-8000-000000000004', 'Kanal tedavisi', '36', 600000, null, null),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'f0000000-0000-4000-8000-000000000008', 'Kron (zirkonyum)', '36', 800000, 'Kanal tedavisiyle birlikte indirim', null),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002', 'f0000000-0000-4000-8000-000000000002', 'Diş taşı temizliği', null, 150000, null, null);
+
+insert into public.patient_payments (clinic_id, patient_id, amount, method, paid_on, note, received_by) values
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 300000, 'kredi_karti', current_date - 20, 'Kanal 1. seans', null),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 300000, 'nakit',       current_date - 3,  null, null),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002', 150000, 'havale',      current_date - 30, null, null);

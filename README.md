@@ -56,6 +56,10 @@ npm run db:stop      # durdurur (veriyi silmez)
 - Bulut projesi YOK. Gerçek hasta verisi kullanılmaz. Gizli anahtarlar (`sb_secret_…`) uygulamaya konmaz.
 
 Roller ve yetkiler: `sahip`, `yonetici`, `hekim`, `resepsiyonist`, `asistan`. Bir üyenin birden çok rolü olabilir.
+Ödemeler: fiyat listesi (Ayarlar → Fiyat listesi), hasta kartında borç/ödenen/kalan. Sahip, yönetici,
+hekim ve desk görür; hekim/desk/yönetici fiyat ve tutar değiştirebilir (kim, ne zaman, eski → yeni,
+sebep görünür). Kayıtlar silinmez; yalnızca sahip sebebiyle iptal eder. Tutarlar kuruş cinsinden tutulur.
+Bu bir tahsilat takibi; resmi fatura/e-Arşiv yerine geçmez.
 Asistan röntgen/fotoğraf yükler ama görüntüleri göremez; hekim inceler, gerekirse sebebiyle tekrar
 çekim ister ve istek asistanın Ana Sayfa'sında ve hasta kartında görünür.
 Sağlık ayrıntıları ve tedavi bilgisi yalnızca `hekim` rolüne açıktır; resepsiyon yalnızca

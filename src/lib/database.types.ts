@@ -71,6 +71,12 @@ isOneToOne: false
       foreignKeyName: "appointments_clinic_id_patient_id_fkey"
       columns: ["clinic_id","patient_id"]
 isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "appointments_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["clinic_id","id"]
     }
@@ -107,6 +113,26 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "clinics"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"charge_changes": {
+                  Row: {
+                    "changed_at": string,"changed_by": string | null,"charge_id": string,"clinic_id": string,"id": number,"new_amount": number,"note": string,"old_amount": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "changed_at"?: string,"changed_by"?: string | null,"charge_id": string,"clinic_id": string,"id"?: never,"new_amount": number,"note": string,"old_amount": number
+                  }
+                  Update: {
+                    "changed_at"?: string,"changed_by"?: string | null,"charge_id"?: string,"clinic_id"?: string,"id"?: never,"new_amount"?: number,"note"?: string,"old_amount"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "charge_changes_clinic_id_charge_id_fkey"
+      columns: ["clinic_id","charge_id"]
+isOneToOne: false
+      referencedRelation: "patient_charges"
+      referencedColumns: ["clinic_id","id"]
     }
                   ]
                 },"clinic_members": {
@@ -159,6 +185,12 @@ isOneToOne: false
       foreignKeyName: "media_requests_clinic_id_patient_id_fkey"
       columns: ["clinic_id","patient_id"]
 isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "media_requests_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["clinic_id","id"]
     },{
@@ -195,6 +227,44 @@ isOneToOne: false
       referencedColumns: ["clinic_id","id"]
     }
                   ]
+                },"patient_charges": {
+                  Row: {
+                    "adjust_note": string | null,"amount": number,"cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"change_note": string | null,"clinic_id": string,"created_at": string,"created_by": string | null,"description": string,"id": string,"list_amount": number | null,"patient_id": string,"price_item_id": string | null,"tooth": string | null,"treatment_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "adjust_note"?: string | null,"amount": number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"change_note"?: string | null,"clinic_id": string,"created_at"?: string,"created_by"?: string | null,"description": string,"id"?: string,"list_amount"?: number | null,"patient_id": string,"price_item_id"?: string | null,"tooth"?: string | null,"treatment_id"?: string | null
+                  }
+                  Update: {
+                    "adjust_note"?: string | null,"amount"?: number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"change_note"?: string | null,"clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string,"id"?: string,"list_amount"?: number | null,"patient_id"?: string,"price_item_id"?: string | null,"tooth"?: string | null,"treatment_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "patient_charges_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "patient_charges_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "patient_charges_clinic_id_price_item_id_fkey"
+      columns: ["clinic_id","price_item_id"]
+isOneToOne: false
+      referencedRelation: "price_list_items"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "patient_charges_clinic_id_treatment_id_fkey"
+      columns: ["clinic_id","treatment_id"]
+isOneToOne: false
+      referencedRelation: "treatments"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
                 },"patient_medical": {
                   Row: {
                     "allergies": (string)[],"clinic_id": string,"clinical_notes": string | null,"conditions": (string)[],"patient_id": string,"updated_at": string
@@ -209,6 +279,38 @@ isOneToOne: false
                   Relationships: [
                     {
       foreignKeyName: "patient_medical_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "patient_medical_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"patient_payments": {
+                  Row: {
+                    "amount": number,"cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"clinic_id": string,"created_at": string,"id": string,"method": Database["public"]['Enums']["payment_method"],"note": string | null,"paid_on": string,"patient_id": string,"received_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id": string,"created_at"?: string,"id"?: string,"method": Database["public"]['Enums']["payment_method"],"note"?: string | null,"paid_on"?: string,"patient_id": string,"received_by"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id"?: string,"created_at"?: string,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"note"?: string | null,"paid_on"?: string,"patient_id"?: string,"received_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "patient_payments_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "patient_payments_clinic_id_patient_id_fkey"
       columns: ["clinic_id","patient_id"]
 isOneToOne: false
       referencedRelation: "patients"
@@ -235,6 +337,46 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"price_changes": {
+                  Row: {
+                    "changed_at": string,"changed_by": string | null,"clinic_id": string,"id": number,"item_id": string,"new_amount": number,"note": string | null,"old_amount": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "changed_at"?: string,"changed_by"?: string | null,"clinic_id": string,"id"?: never,"item_id": string,"new_amount": number,"note"?: string | null,"old_amount": number
+                  }
+                  Update: {
+                    "changed_at"?: string,"changed_by"?: string | null,"clinic_id"?: string,"id"?: never,"item_id"?: string,"new_amount"?: number,"note"?: string | null,"old_amount"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "price_changes_clinic_id_item_id_fkey"
+      columns: ["clinic_id","item_id"]
+isOneToOne: false
+      referencedRelation: "price_list_items"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"price_list_items": {
+                  Row: {
+                    "active": boolean,"amount": number,"change_note": string | null,"clinic_id": string,"created_at": string,"id": string,"name": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"amount": number,"change_note"?: string | null,"clinic_id": string,"created_at"?: string,"id"?: string,"name": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "active"?: boolean,"amount"?: number,"change_note"?: string | null,"clinic_id"?: string,"created_at"?: string,"id"?: string,"name"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "price_list_items_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"radiographs": {
                   Row: {
                     "clinic_id": string,"content_type": string,"created_at": string,"id": string,"invalidated_at": string | null,"kind": Database["public"]['Enums']["radiograph_kind"],"note": string | null,"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"request_id": string | null,"review_note": string | null,"review_status": Database["public"]['Enums']["media_review_status"],"reviewed_at": string | null,"reviewed_by": string | null,"storage_path": string,"taken_on": string,"tooth": string | null,"treatment_id": string | null,"uploaded_by": string | null
@@ -248,6 +390,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "radiographs_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
       foreignKeyName: "radiographs_clinic_id_patient_id_fkey"
       columns: ["clinic_id","patient_id"]
 isOneToOne: false
@@ -329,6 +477,12 @@ isOneToOne: false
       foreignKeyName: "treatments_clinic_id_patient_id_fkey"
       columns: ["clinic_id","patient_id"]
 isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "treatments_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["clinic_id","id"]
     }
@@ -336,13 +490,33 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "patient_balances": {
+                  Row: {
+                    "clinic_id": string,"patient_id": string,"total_charged": number | null,"total_paid": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "clinic_id"?: string | null,"patient_id"?: string | null,"total_charged"?: never,"total_paid"?: never
+                         }
+                        Update: {
+                           "clinic_id"?: string | null,"patient_id"?: string | null,"total_charged"?: never,"total_paid"?: never
+                         }
+                        Relationships: [
+                    {
+      foreignKeyName: "patients_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             [_ in never]: never
           }
           Enums: {
-            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"
+            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -462,7 +636,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol"]
+            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol"]
           }
         }
 } as const

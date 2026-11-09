@@ -12,6 +12,7 @@ import { PatientAvatar } from '@/features/patients/components';
 import { usePatient } from '@/features/patients/hooks';
 import { MedicalCard } from '@/features/patients/medical-card';
 import { TreatmentsCard } from '@/features/patients/treatments-card';
+import { PaymentsCard } from '@/features/payments/payments-card';
 import { MediaCard } from '@/features/radiographs/media-card';
 import { useOpenMediaRequests, usePatientRadiographs } from '@/features/radiographs/radiographs';
 import { useClinicSession } from '@/features/session/session-context';
@@ -226,6 +227,8 @@ export default function PatientDetailScreen() {
         requests={mediaRequests}
         onChanged={reloadMedia}
       />
+      {/* Sahip, yönetici, hekim ve resepsiyon görür; asistan için hiç çizilmez */}
+      <PaymentsCard patient={patient} />
 
       <Card title="İdari not">
         <Text style={patient.adminNote ? styles.notes : styles.empty}>

@@ -4,7 +4,8 @@ import { StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Card, Divider, Screen } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
-import { demoClinic } from '@/data/demo';
+import { clinicConfig } from '@/features/appointments/clinic';
+import { minutesToTime } from '@/lib/dates';
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -36,11 +37,13 @@ export default function SettingsScreen() {
   return (
     <Screen title="Ayarlar" subtitle="Klinik ve uygulama tercihleri.">
       <Card title="Klinik bilgileri">
-        <InfoRow label="Klinik adı" value={demoClinic.name} />
+        <InfoRow label="Klinik adı" value={clinicConfig.name} />
         <Divider />
-        <InfoRow label="Hekimler" value={demoClinic.doctors.join(', ')} />
+        <InfoRow label="Hekimler" value={clinicConfig.doctors.join(', ')} />
         <Divider />
-        <InfoRow label="Çalışma saatleri" value={demoClinic.workingHours} />
+        <InfoRow label="Koltuklar" value={clinicConfig.chairs.join(', ')} />
+        <Divider />
+        <InfoRow label="Çalışma saatleri" value={`Pzt–Cmt ${minutesToTime(clinicConfig.openMin)} – ${minutesToTime(clinicConfig.closeMin)}`} />
       </Card>
 
       <Card title="Bildirimler">

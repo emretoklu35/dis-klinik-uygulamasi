@@ -20,7 +20,6 @@ export const demoPatients: Patient[] = [
     notes: 'Diş hekimi kaygısı var; işlemleri önceden anlatmak iyi geliyor.',
     createdAt: '2025-02-03T10:00:00',
     lastVisit: '2026-10-26',
-    nextAppointment: '2026-11-09T09:30:00',
     treatments: [
       { id: 't1', date: '2026-10-26', procedure: 'Kontrol muayenesi', doctor: 'Dr. Demo A', status: 'tamamlandi' },
       { id: 't2', date: '2026-11-09', procedure: 'Dolgu', tooth: '26', doctor: 'Dr. Demo A', status: 'planlandi' },
@@ -37,7 +36,6 @@ export const demoPatients: Patient[] = [
     medicalNotes: ['Hipertansiyon', 'Kan sulandırıcı kullanıyor'],
     createdAt: '2024-11-18T14:20:00',
     lastVisit: '2026-10-09',
-    nextAppointment: '2026-11-09T10:15:00',
     treatments: [
       { id: 't3', date: '2026-09-02', procedure: 'Panoramik röntgen', doctor: 'Dr. Demo B', status: 'tamamlandi' },
       { id: 't4', date: '2026-10-09', procedure: 'Diş taşı temizliği', doctor: 'Dr. Demo B', status: 'tamamlandi' },

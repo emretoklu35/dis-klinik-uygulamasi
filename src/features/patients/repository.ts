@@ -7,6 +7,10 @@
  * yeterli olacak. Ekranlara dokunmak gerekmeyecek.
  */
 
+import { appointmentRepository } from '@/features/appointments/repository';
+import { isActive } from '@/features/appointments/utils';
+import { nowLocalDateTime, todayKey } from '@/lib/dates';
+
 import { demoPatients } from './demo-data';
 import type { NewPatientInput, Patient, PatientSummary } from './types';
 import { fullName, normalizeForSearch } from './utils';
@@ -17,17 +21,28 @@ export interface PatientRepository {
   create(input: NewPatientInput): Promise<Patient>;
 }
 
-function toSummary(p: Patient): PatientSummary {
+function toSummary(p: Patient, nextAppointment?: string): PatientSummary {
   return {
     id: p.id,
     firstName: p.firstName,
     lastName: p.lastName,
     phone: p.phone,
     lastVisit: p.lastVisit,
-    nextAppointment: p.nextAppointment,
+    nextAppointment,
     hasAllergy: p.allergies.length > 0,
     activeTreatments: p.treatments.filter((t) => t.status !== 'tamamlandi').length,
   };
+}
+
+/** Her hastanın bugünden sonraki ilk aktif randevusu (veritabanında tek sorgu olacak). */
+async function nextAppointments() {
+  const nowStr = nowLocalDateTime();
+  const upcoming = await appointmentRepository.listRange(todayKey(), '9999-12-31');
+  const map = new Map<string, string>();
+  for (const a of upcoming) {
+    if (isActive(a) && a.start >= nowStr && !map.has(a.patientId)) map.set(a.patientId, a.start);
+  }
+  return map;
 }
 
 /** Bellekte çalışan demo deposu. Uygulama yeniden açılınca sıfırlanır. */
@@ -37,6 +52,7 @@ class InMemoryPatientRepository implements PatientRepository {
   async list(query = '') {
     const q = normalizeForSearch(query);
     const digits = query.replace(/\D/g, '');
+    const nextByPatient = await nextAppointments();
     return this.patients
       .filter((p) => {
         if (!q) return true;
@@ -44,7 +60,7 @@ class InMemoryPatientRepository implements PatientRepository {
         return digits.length >= 3 && p.phone.replace(/\D/g, '').includes(digits);
       })
       .sort((a, b) => fullName(a).localeCompare(fullName(b), 'tr'))
-      .map(toSummary);
+      .map((p) => toSummary(p, nextByPatient.get(p.id)));
   }
 
   async get(id: string) {

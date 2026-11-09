@@ -5,17 +5,20 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Badge, Button, Card, CenteredMessage, Divider, Grid, gridItem, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { AppointmentCard } from '@/features/appointments/components';
+import { usePatientAppointments } from '@/features/appointments/hooks';
+import { isActive } from '@/features/appointments/utils';
 import { PatientAvatar } from '@/features/patients/components';
 import { usePatient } from '@/features/patients/hooks';
 import type { TreatmentStatus } from '@/features/patients/types';
 import {
   ageFrom,
   formatDate,
-  formatDateTime,
   fullName,
   genderLabels,
   treatmentStatusLabels,
 } from '@/features/patients/utils';
+import { formatDayLong, nowLocalDateTime } from '@/lib/dates';
 
 const statusTone: Record<TreatmentStatus, 'primary' | 'warning' | 'success'> = {
   planlandi: 'primary',
@@ -37,6 +40,7 @@ export default function PatientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: patient, loading, error } = usePatient(id);
+  const { data: appointments } = usePatientAppointments(id);
 
   if (loading) {
     return (
@@ -62,6 +66,9 @@ export default function PatientDetailScreen() {
   }
 
   const age = ageFrom(patient.birthDate);
+  const now = nowLocalDateTime();
+  const upcoming = appointments.filter((a) => isActive(a) && a.start >= now);
+  const lastPast = appointments.filter((a) => a.start < now && a.status === 'tamamlandi').at(-1);
   const treatments = [...patient.treatments].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
@@ -119,14 +126,38 @@ export default function PatientDetailScreen() {
           <InfoRow icon="gift-outline" label="Doğum tarihi" value={formatDate(patient.birthDate)} />
         </Card>
 
-        <Card title="Ziyaretler" style={gridItem}>
-          <InfoRow icon="time-outline" label="Son ziyaret" value={formatDate(patient.lastVisit)} />
-          <Divider />
+        <Card
+          title="Randevular"
+          style={gridItem}
+          action={
+            <Button
+              label="Randevu ver"
+              icon="add"
+              variant="secondary"
+              onPress={() =>
+                router.push({ pathname: '/takvim/yeni', params: { patientId: patient.id } }, { withAnchor: true })
+              }
+            />
+          }>
           <InfoRow
-            icon="calendar-outline"
-            label="Sıradaki randevu"
-            value={formatDateTime(patient.nextAppointment)}
+            icon="time-outline"
+            label="Son ziyaret"
+            value={formatDate(lastPast?.start.slice(0, 10) ?? patient.lastVisit)}
           />
+          {upcoming.length === 0 ? (
+            <>
+              <Divider />
+              <Text style={styles.empty}>Yaklaşan randevu yok.</Text>
+            </>
+          ) : (
+            upcoming.slice(0, 3).map((a) => (
+              <Fragment key={a.id}>
+                <Divider />
+                <Text style={styles.sub}>{formatDayLong(a.start.slice(0, 10))}</Text>
+                <AppointmentCard appointment={a} />
+              </Fragment>
+            ))
+          )}
         </Card>
       </Grid>
 

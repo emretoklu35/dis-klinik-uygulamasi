@@ -128,17 +128,58 @@ export function Grid({ children }: { children: ReactNode }) {
 /** Grid içindeki kartlar için: geniş ekranda yan yana, dar ekranda tam genişlik. */
 export const gridItem: ViewStyle = { flexGrow: 1, flexBasis: 320 };
 
-export function Badge({ label, tone = 'primary' }: { label: string; tone?: 'primary' | 'success' | 'warning' | 'muted' }) {
+export type BadgeTone = 'primary' | 'success' | 'warning' | 'muted' | 'danger';
+
+export function Badge({ label, tone = 'primary' }: { label: string; tone?: BadgeTone }) {
   const palette = {
     primary: [Colors.primarySoft, Colors.primary],
     success: [Colors.successSoft, Colors.success],
     warning: [Colors.warningSoft, Colors.warning],
     muted: [Colors.background, Colors.textSecondary],
+    danger: [Colors.dangerSoft, Colors.danger],
   }[tone];
   return (
     <View style={[styles.badge, { backgroundColor: palette[0] }]}>
       <Text style={[styles.badgeText, { color: palette[1] }]}>{label}</Text>
     </View>
+  );
+}
+
+/** Seçilebilir küçük düğme (saat, süre, işlem önerisi vb.). */
+export function Chip({
+  label,
+  selected = false,
+  disabled = false,
+  onPress,
+  accessibilityHint,
+}: {
+  label: string;
+  selected?: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+  accessibilityHint?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
+      accessibilityHint={accessibilityHint}
+      style={[
+        styles.segment,
+        selected && styles.segmentSelected,
+        disabled && styles.chipDisabled,
+      ]}>
+      <Text
+        style={[
+          styles.segmentText,
+          selected && styles.segmentTextSelected,
+          disabled && styles.chipDisabledText,
+        ]}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -156,11 +197,11 @@ export function Button({
   label: string;
   onPress: () => void;
   icon?: IconName;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
 }) {
-  const primary = variant === 'primary';
-  const fg = primary ? '#FFFFFF' : Colors.primary;
+  const filled = variant !== 'secondary';
+  const fg = filled ? '#FFFFFF' : Colors.primary;
   return (
     <Pressable
       onPress={onPress}
@@ -169,7 +210,9 @@ export function Button({
       accessibilityState={{ disabled }}
       style={({ pressed }) => [
         styles.button,
-        primary ? styles.buttonPrimary : styles.buttonSecondary,
+        variant === 'primary' && styles.buttonPrimary,
+        variant === 'secondary' && styles.buttonSecondary,
+        variant === 'danger' && styles.buttonDanger,
         (pressed || disabled) && { opacity: disabled ? 0.5 : 0.85 },
       ]}>
       {icon ? <Ionicons name={icon} size={18} color={fg} /> : null}
@@ -332,6 +375,7 @@ const styles = StyleSheet.create({
   },
   buttonPrimary: { backgroundColor: Colors.primary },
   buttonSecondary: { backgroundColor: Colors.primarySoft },
+  buttonDanger: { backgroundColor: Colors.danger },
   buttonText: { fontSize: 15, fontWeight: '600' },
   field: { gap: 6 },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: Colors.text },
@@ -362,6 +406,8 @@ const styles = StyleSheet.create({
   segmentSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   segmentText: { fontSize: 14, color: Colors.text },
   segmentTextSelected: { color: '#FFFFFF', fontWeight: '600' },
+  chipDisabled: { backgroundColor: Colors.background, borderStyle: 'dashed' },
+  chipDisabledText: { color: Colors.textMuted, textDecorationLine: 'line-through' },
   centered: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl },
   centeredTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
   centeredText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },

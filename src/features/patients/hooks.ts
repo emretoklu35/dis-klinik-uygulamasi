@@ -1,62 +1,17 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
+
+import { useFocusLoad } from '@/lib/use-focus-load';
 
 import { patientRepository } from './repository';
 import type { Patient, PatientSummary } from './types';
 
-type AsyncState<T> = { data: T; loading: boolean; error: string | null };
-
-/**
- * Hasta listesini getirir. Ekran her odaklandığında yenilenir
- * (ör. yeni hasta ekleyip geri dönünce liste güncel olur).
- */
+/** Hasta listesi; ekran her odaklandığında yenilenir. */
 export function usePatientList(query: string) {
-  const [state, setState] = useState<AsyncState<PatientSummary[]>>({
-    data: [],
-    loading: true,
-    error: null,
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setState((s) => ({ ...s, loading: true }));
-      patientRepository
-        .list(query)
-        .then((data) => active && setState({ data, loading: false, error: null }))
-        .catch(() => active && setState((s) => ({ ...s, loading: false, error: 'Hastalar yüklenemedi.' })));
-      return () => {
-        active = false;
-      };
-    }, [query]),
-  );
-
-  return state;
+  const load = useCallback(() => patientRepository.list(query), [query]);
+  return useFocusLoad<PatientSummary[]>(load, [], 'Hastalar yüklenemedi.');
 }
 
 export function usePatient(id: string | undefined) {
-  const [state, setState] = useState<AsyncState<Patient | null>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      if (!id) {
-        setState({ data: null, loading: false, error: null });
-        return;
-      }
-      patientRepository
-        .get(id)
-        .then((data) => active && setState({ data, loading: false, error: null }))
-        .catch(() => active && setState({ data: null, loading: false, error: 'Hasta yüklenemedi.' }));
-      return () => {
-        active = false;
-      };
-    }, [id]),
-  );
-
-  return state;
+  const load = useCallback(() => (id ? patientRepository.get(id) : Promise.resolve(null)), [id]);
+  return useFocusLoad<Patient | null>(load, null, 'Hasta yüklenemedi.');
 }

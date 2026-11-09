@@ -33,7 +33,6 @@ export type Patient = {
   notes?: string;
   createdAt: string; // ISO tarih-saat
   lastVisit?: string; // ISO tarih
-  nextAppointment?: string; // ISO tarih-saat
   treatments: Treatment[];
 };
 
@@ -47,10 +46,9 @@ export type NewPatientInput = Pick<
 };
 
 /** Listede gösterilen özet (detay ekranına göre daha hafif). */
-export type PatientSummary = Pick<
-  Patient,
-  'id' | 'firstName' | 'lastName' | 'phone' | 'lastVisit' | 'nextAppointment'
-> & {
+export type PatientSummary = Pick<Patient, 'id' | 'firstName' | 'lastName' | 'phone' | 'lastVisit'> & {
+  /** Randevu kayıtlarından hesaplanır (yerel tarih-saat). */
+  nextAppointment?: string;
   hasAllergy: boolean;
   activeTreatments: number;
 };

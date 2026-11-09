@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "dis-klinik-uygulamasi",
+    "name": "Diş Kliniği",
     "slug": "dis-klinik-uygulamasi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "disklinikuygulamasi",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

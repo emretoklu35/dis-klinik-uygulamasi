@@ -12,8 +12,8 @@ import { PatientAvatar } from '@/features/patients/components';
 import { usePatient } from '@/features/patients/hooks';
 import { MedicalCard } from '@/features/patients/medical-card';
 import { TreatmentsCard } from '@/features/patients/treatments-card';
-import { usePatientRadiographs } from '@/features/radiographs/radiographs';
-import { RadiographsCard } from '@/features/radiographs/radiographs-card';
+import { MediaCard } from '@/features/radiographs/media-card';
+import { useOpenMediaRequests, usePatientRadiographs } from '@/features/radiographs/radiographs';
 import { useClinicSession } from '@/features/session/session-context';
 import type { Patient } from '@/features/patients/types';
 import { ageFrom, formatDate, fullName, genderLabels } from '@/features/patients/utils';
@@ -103,6 +103,14 @@ export default function PatientDetailScreen() {
     id,
     can('rontgen.oku'),
   );
+  const { data: mediaRequests, reload: reloadRequests } = useOpenMediaRequests(
+    id,
+    can('medya.istek.oku'),
+  );
+  const reloadMedia = () => {
+    reloadRadiographs();
+    reloadRequests();
+  };
 
   // Yalnızca ilk yüklemede tam ekran bekleme; kayıttan sonra yenilerken kart yerinde kalır.
   if (loading && !patient) {
@@ -174,17 +182,19 @@ export default function PatientDetailScreen() {
           title="Randevular"
           style={gridItem}
           action={
-            <Button
-              label="Randevu ver"
-              icon="add"
-              variant="secondary"
-              onPress={() =>
-                router.push(
-                  { pathname: '/takvim/yeni', params: { patientId: patient.id } },
-                  { withAnchor: true },
-                )
-              }
-            />
+            can('randevu.yaz') ? (
+              <Button
+                label="Randevu ver"
+                icon="add"
+                variant="secondary"
+                onPress={() =>
+                  router.push(
+                    { pathname: '/takvim/yeni', params: { patientId: patient.id } },
+                    { withAnchor: true },
+                  )
+                }
+              />
+            ) : null
           }>
           <InfoRow
             icon="time-outline"
@@ -210,7 +220,12 @@ export default function PatientDetailScreen() {
 
       {/* Yalnızca hekim: veritabanından gelmezse kartlar hiç çizilmez */}
       <TreatmentsCard patient={patient} radiographs={radiographs} onSaved={reload} />
-      <RadiographsCard patient={patient} radiographs={radiographs} onChanged={reloadRadiographs} />
+      <MediaCard
+        patient={patient}
+        radiographs={radiographs}
+        requests={mediaRequests}
+        onChanged={reloadMedia}
+      />
 
       <Card title="İdari not">
         <Text style={patient.adminNote ? styles.notes : styles.empty}>

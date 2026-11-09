@@ -80,7 +80,7 @@ export function SignInScreen() {
                 <Text style={styles.devTitle}>Yerel geliştirme</Text>
                 <Text style={styles.devText}>
                   Sahte demo hesaplar: sahip.hekim@demo.test, hekim@demo.test, yonetici@demo.test,
-                  resepsiyon@demo.test. Şifre: supabase/seed.sql dosyasında.
+                  resepsiyon@demo.test, asistan@demo.test. Şifre: supabase/seed.sql dosyasında.
                 </Text>
               </View>
             ) : null}

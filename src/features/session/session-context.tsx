@@ -36,6 +36,8 @@ export type Permission =
   | 'tedavi.yaz'
   | 'rontgen.oku'
   | 'rontgen.yaz'
+  | 'medya.yukle'
+  | 'medya.istek.oku'
   | 'randevu.oku'
   | 'randevu.yaz'
   | 'gorev.oku'
@@ -242,4 +244,5 @@ export const roleLabels: Record<ClinicRole, string> = {
   yonetici: 'Yönetici',
   hekim: 'Hekim',
   resepsiyonist: 'Resepsiyon',
+  asistan: 'Asistan',
 };

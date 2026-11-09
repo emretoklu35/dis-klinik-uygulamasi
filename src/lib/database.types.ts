@@ -143,6 +143,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"media_requests": {
+                  Row: {
+                    "clinic_id": string,"fulfilled_at": string | null,"fulfilled_radiograph_id": string | null,"id": string,"kind": Database["public"]['Enums']["radiograph_kind"],"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"reason": string,"requested_at": string,"requested_by": string | null,"source_radiograph_id": string | null,"tooth": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"fulfilled_at"?: string | null,"fulfilled_radiograph_id"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["radiograph_kind"],"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"reason": string,"requested_at"?: string,"requested_by"?: string | null,"source_radiograph_id"?: string | null,"tooth"?: string | null
+                  }
+                  Update: {
+                    "clinic_id"?: string,"fulfilled_at"?: string | null,"fulfilled_radiograph_id"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["radiograph_kind"],"patient_id"?: string,"purpose"?: Database["public"]['Enums']["radiograph_purpose"],"reason"?: string,"requested_at"?: string,"requested_by"?: string | null,"source_radiograph_id"?: string | null,"tooth"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "media_requests_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "media_requests_fulfilled_radiograph_id_fkey"
+      columns: ["fulfilled_radiograph_id"]
+isOneToOne: false
+      referencedRelation: "radiographs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "media_requests_source_radiograph_id_fkey"
+      columns: ["source_radiograph_id"]
+isOneToOne: false
+      referencedRelation: "radiographs"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"member_roles": {
                   Row: {
                     "clinic_id": string,"granted_at": string,"granted_by": string | null,"member_id": string,"role": Database["public"]['Enums']["clinic_role"]
@@ -205,14 +237,14 @@ isOneToOne: false
                   ]
                 },"radiographs": {
                   Row: {
-                    "clinic_id": string,"content_type": string,"created_at": string,"id": string,"invalidated_at": string | null,"kind": Database["public"]['Enums']["radiograph_kind"],"note": string | null,"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"storage_path": string,"taken_on": string,"tooth": string | null,"treatment_id": string | null,"uploaded_by": string | null
+                    "clinic_id": string,"content_type": string,"created_at": string,"id": string,"invalidated_at": string | null,"kind": Database["public"]['Enums']["radiograph_kind"],"note": string | null,"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"request_id": string | null,"review_note": string | null,"review_status": Database["public"]['Enums']["media_review_status"],"reviewed_at": string | null,"reviewed_by": string | null,"storage_path": string,"taken_on": string,"tooth": string | null,"treatment_id": string | null,"uploaded_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "clinic_id": string,"content_type": string,"created_at"?: string,"id"?: string,"invalidated_at"?: string | null,"kind"?: Database["public"]['Enums']["radiograph_kind"],"note"?: string | null,"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"storage_path": string,"taken_on"?: string,"tooth"?: string | null,"treatment_id"?: string | null,"uploaded_by"?: string | null
+                    "clinic_id": string,"content_type": string,"created_at"?: string,"id"?: string,"invalidated_at"?: string | null,"kind"?: Database["public"]['Enums']["radiograph_kind"],"note"?: string | null,"patient_id": string,"purpose": Database["public"]['Enums']["radiograph_purpose"],"request_id"?: string | null,"review_note"?: string | null,"review_status"?: Database["public"]['Enums']["media_review_status"],"reviewed_at"?: string | null,"reviewed_by"?: string | null,"storage_path": string,"taken_on"?: string,"tooth"?: string | null,"treatment_id"?: string | null,"uploaded_by"?: string | null
                   }
                   Update: {
-                    "clinic_id"?: string,"content_type"?: string,"created_at"?: string,"id"?: string,"invalidated_at"?: string | null,"kind"?: Database["public"]['Enums']["radiograph_kind"],"note"?: string | null,"patient_id"?: string,"purpose"?: Database["public"]['Enums']["radiograph_purpose"],"storage_path"?: string,"taken_on"?: string,"tooth"?: string | null,"treatment_id"?: string | null,"uploaded_by"?: string | null
+                    "clinic_id"?: string,"content_type"?: string,"created_at"?: string,"id"?: string,"invalidated_at"?: string | null,"kind"?: Database["public"]['Enums']["radiograph_kind"],"note"?: string | null,"patient_id"?: string,"purpose"?: Database["public"]['Enums']["radiograph_purpose"],"request_id"?: string | null,"review_note"?: string | null,"review_status"?: Database["public"]['Enums']["media_review_status"],"reviewed_at"?: string | null,"reviewed_by"?: string | null,"storage_path"?: string,"taken_on"?: string,"tooth"?: string | null,"treatment_id"?: string | null,"uploaded_by"?: string | null
                   }
                   Relationships: [
                     {
@@ -227,6 +259,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "treatments"
       referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "radiographs_request_id_fkey"
+      columns: ["request_id"]
+isOneToOne: false
+      referencedRelation: "media_requests"
+      referencedColumns: ["id"]
     }
                   ]
                 },"role_permissions": {
@@ -304,7 +342,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Enums: {
-            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist","gender": "kadin"|"erkek"|"belirtilmedi","member_status": "aktif"|"pasif","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"
+            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -424,7 +462,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist"],"gender": ["kadin", "erkek", "belirtilmedi"],"member_status": ["aktif", "pasif"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol"]
+            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol"]
           }
         }
 } as const

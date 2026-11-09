@@ -7,9 +7,11 @@ import { Button, Card, CenteredMessage, Divider, Screen } from '@/components/ui'
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { PatientListItem } from '@/features/patients/components';
 import { usePatientList } from '@/features/patients/hooks';
+import { useClinicSession } from '@/features/session/session-context';
 
 export default function PatientsScreen() {
   const router = useRouter();
+  const { can } = useClinicSession();
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const { data, loading, error } = usePatientList(deferredQuery);
@@ -19,7 +21,13 @@ export default function PatientsScreen() {
       title="Hastalar"
       subtitle={loading ? 'Yükleniyor…' : `${data.length} hasta`}
       headerRight={
-        <Button label="Yeni hasta" icon="person-add-outline" onPress={() => router.push('/hastalar/yeni')} />
+        can('hasta.temel.yaz') ? (
+          <Button
+            label="Yeni hasta"
+            icon="person-add-outline"
+            onPress={() => router.push('/hastalar/yeni')}
+          />
+        ) : null
       }>
       <View style={styles.search}>
         <Ionicons name="search" size={18} color={Colors.textMuted} />

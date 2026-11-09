@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Badge, Card, Divider, Grid, gridItem, Screen, StatCard } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
+import { MediaHomeCard } from '@/features/radiographs/media-home-card';
 import { useClinicSession } from '@/features/session/session-context';
 import { dueLabel, useTasks } from '@/features/tasks/tasks';
 import { AppointmentCard } from '@/features/appointments/components';
@@ -89,6 +90,9 @@ export default function HomeScreen() {
             </Fragment>
           ))}
         </Card>
+
+        {/* Asistan: tekrar çekim istekleri · Hekim: inceleme bekleyen görüntüler */}
+        <MediaHomeCard />
       </Grid>
     </Screen>
   );

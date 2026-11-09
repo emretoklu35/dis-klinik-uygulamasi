@@ -15,7 +15,8 @@ Expo SDK 58 + React Native + TypeScript + Expo Router.
 4. `.env.example` dosyasını `.env.local` olarak kopyalayın; `npm run db:status` çıktısındaki
    API URL ve **Publishable** anahtarı yazın. (Secret anahtar asla yazılmaz.)
 5. Uygulamayı başlatın ve demo hesaplardan biriyle giriş yapın
-   (`sahip.hekim@demo.test`, `hekim@demo.test`, `yonetici@demo.test`, `resepsiyon@demo.test`;
+   (`sahip.hekim@demo.test`, `hekim@demo.test`, `yonetici@demo.test`, `resepsiyon@demo.test`,
+   `asistan@demo.test`;
    yerel test şifresi `supabase/seed.sql` içinde).
 
 ```bash
@@ -54,7 +55,9 @@ npm run db:stop      # durdurur (veriyi silmez)
   Yerelde yalnızca sahte görüntü kullanın; gerçek hasta röntgeni yüklemeyin.
 - Bulut projesi YOK. Gerçek hasta verisi kullanılmaz. Gizli anahtarlar (`sb_secret_…`) uygulamaya konmaz.
 
-Roller ve yetkiler: `sahip`, `yonetici`, `hekim`, `resepsiyonist`. Bir üyenin birden çok rolü olabilir.
+Roller ve yetkiler: `sahip`, `yonetici`, `hekim`, `resepsiyonist`, `asistan`. Bir üyenin birden çok rolü olabilir.
+Asistan röntgen/fotoğraf yükler ama görüntüleri göremez; hekim inceler, gerekirse sebebiyle tekrar
+çekim ister ve istek asistanın Ana Sayfa'sında ve hasta kartında görünür.
 Sağlık ayrıntıları ve tedavi bilgisi yalnızca `hekim` rolüne açıktır; resepsiyon yalnızca
 "alerji kaydı var" işaretini görür. Hekim rolünü yalnızca sahip atayabilir.
 

@@ -7,6 +7,7 @@ import { addDays, fromClinicLocal, toClinicLocal } from '@/lib/dates';
 import { unwrap, unwrapMaybe } from '@/lib/db-errors';
 import { supabase } from '@/lib/supabase';
 
+import { NO_PATIENT_LABEL } from './clinic';
 import type {
   Appointment,
   AppointmentClinical,
@@ -28,6 +29,8 @@ export interface AppointmentRepository {
     canWriteClinical: boolean,
   ): Promise<void>;
   setStatus(id: string, status: AppointmentStatus): Promise<void>;
+  /** Hastasız randevuya hasta bağlar (bir kez; sonra değiştirilemez). */
+  attachPatient(id: string, patientId: string): Promise<void>;
 }
 
 const SELECT =
@@ -38,7 +41,7 @@ const SELECT =
 type ClinicalRow = { procedure: string | null; tooth: string | null; clinical_note: string | null };
 type Row = {
   id: string;
-  patient_id: string;
+  patient_id: string | null;
   doctor_member_id: string;
   chair_id: string;
   starts_at: string;
@@ -60,7 +63,11 @@ function toAppointment(r: Row): Appointment {
   return {
     id: r.id,
     patientId: r.patient_id,
-    patientName: r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : '—',
+    patientName: r.patients
+      ? `${r.patients.first_name} ${r.patients.last_name}`
+      : r.patient_id
+        ? '—'
+        : NO_PATIENT_LABEL,
     start: toClinicLocal(r.starts_at),
     durationMin: Math.round((Date.parse(r.ends_at) - Date.parse(r.starts_at)) / 60000),
     visitType: r.visit_type,
@@ -165,6 +172,19 @@ class SupabaseAppointmentRepository implements AppointmentRepository {
     unwrap(
       await supabase.from('appointments').update({ status }).eq('id', id).select('id').single(),
       'Durum değiştirilemedi.',
+    );
+  }
+
+  async attachPatient(id: string, patientId: string) {
+    unwrap(
+      await supabase
+        .from('appointments')
+        .update({ patient_id: patientId })
+        .eq('id', id)
+        .is('patient_id', null)
+        .select('id')
+        .single(),
+      'Hasta bağlanamadı.',
     );
   }
 

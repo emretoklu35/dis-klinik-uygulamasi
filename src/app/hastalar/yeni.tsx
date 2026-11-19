@@ -109,7 +109,9 @@ export default function NewPatientScreen() {
       });
       router.replace({ pathname: '/hastalar/[id]', params: { id } });
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Hasta kaydedilemedi. Lütfen tekrar deneyin.');
+      setSaveError(
+        err instanceof Error ? err.message : 'Hasta kaydedilemedi. Lütfen tekrar deneyin.',
+      );
       setSaving(false);
     }
   };

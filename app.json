@@ -41,6 +41,14 @@
           "cameraPermission": "Röntgen ekranının fotoğrafını çekebilmek için kameraya erişim gerekiyor.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Mesai girişi ve çıkışı için resepsiyondaki QR kodu okutmak ve röntgen fotoğrafı çekmek için kameraya erişim gerekiyor.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {

@@ -64,11 +64,13 @@ class SupabasePatientRepository implements PatientRepository {
     const rows = unwrap(patients, 'Hastalar yüklenemedi.');
     const next = new Map<string, string>();
     for (const a of unwrap(upcoming, 'Randevular yüklenemedi.')) {
-      if (!next.has(a.patient_id)) next.set(a.patient_id, toClinicLocal(a.starts_at));
+      if (a.patient_id && !next.has(a.patient_id))
+        next.set(a.patient_id, toClinicLocal(a.starts_at));
     }
     const last = new Map<string, string>();
     for (const a of unwrap(past, 'Randevular yüklenemedi.')) {
-      if (!last.has(a.patient_id)) last.set(a.patient_id, toClinicLocal(a.starts_at).slice(0, 10));
+      if (a.patient_id && !last.has(a.patient_id))
+        last.set(a.patient_id, toClinicLocal(a.starts_at).slice(0, 10));
     }
 
     // Türkçe harflerde doğru eşleşme için arama uygulamada yapılır.

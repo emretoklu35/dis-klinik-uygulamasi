@@ -9,6 +9,7 @@
 --   yonetici@demo.test      → yönetici
 --   resepsiyon@demo.test    → resepsiyonist
 --   asistan@demo.test       → asistan (medya yükler; görüntüleri/sağlık ayrıntısını görmez)
+--   ekran@demo.test         → Mesai Ekranı (resepsiyon tableti; yalnızca QR kod gösterir)
 -- =============================================================================
 
 do $$
@@ -19,7 +20,8 @@ declare
     {"id":"a0000000-0000-4000-8000-000000000002","email":"hekim@demo.test"},
     {"id":"a0000000-0000-4000-8000-000000000003","email":"yonetici@demo.test"},
     {"id":"a0000000-0000-4000-8000-000000000004","email":"resepsiyon@demo.test"},
-    {"id":"a0000000-0000-4000-8000-000000000005","email":"asistan@demo.test"}
+    {"id":"a0000000-0000-4000-8000-000000000005","email":"asistan@demo.test"},
+    {"id":"a0000000-0000-4000-8000-000000000006","email":"ekran@demo.test"}
   ]';
   u jsonb;
 begin
@@ -58,7 +60,8 @@ insert into public.clinic_members (id, clinic_id, user_id, display_name) values
   ('b0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000002', 'Dr. Demo B'),
   ('b0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000003', 'Demo Yönetici'),
   ('b0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000004', 'Demo Resepsiyon'),
-  ('b0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000005', 'Demo Asistan');
+  ('b0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000005', 'Demo Asistan'),
+  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000006', 'Resepsiyon tableti');
 
 insert into public.member_roles (member_id, clinic_id, role, granted_by) values
   ('b0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 'sahip',         null),
@@ -66,7 +69,8 @@ insert into public.member_roles (member_id, clinic_id, role, granted_by) values
   ('b0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'hekim',         null),
   ('b0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'yonetici',      null),
   ('b0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'resepsiyonist', null),
-  ('b0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'asistan',       null);
+  ('b0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'asistan',       null),
+  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'ekran',         null);
 
 -- Hastalar (uygulamadaki demo hastalarla aynı)
 insert into public.patients (id, clinic_id, first_name, last_name, phone, email, birth_date, gender, admin_note, created_at) values
@@ -201,3 +205,156 @@ insert into public.stock_movements (clinic_id, item_id, kind, quantity, lot_no, 
   ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000005', 'giris',      6, 'IMP-A10', current_date + 900, 'Açılış stoğu'),
   ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000006', 'giris',    600, null, null, 'Açılış stoğu'),
   ('c0000000-0000-4000-8000-000000000001', '50000000-0000-4000-8000-000000000007', 'giris',     25, null, null, 'Açılış stoğu');
+
+-- Planlanan tedaviler (seans kapatma ve diş şeması örneği için)
+insert into public.treatments (clinic_id, patient_id, doctor_member_id, performed_on, procedure, tooth, status) values
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', current_date, 'Dolgu',              '37', 'planlandi'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000001', current_date + 9, 'Kron (zirkonyum)', '36', 'planlandi'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000004', 'b0000000-0000-4000-8000-000000000001', current_date + 5, 'İmplant cerrahisi', '46', 'planlandi');
+
+-- Hasta notları (SAHTE). Seed'de oturum olmadığı için yazan kişi ve zaman burada verilir.
+insert into public.patient_notes (clinic_id, patient_id, kind, body, teeth, important, hidden, template, data, author_member_id, created_at) values
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'klinik',
+   E'Şikâyet: Sol alt bölgede sıcak-soğuk hassasiyeti.\nBulgu: 36 derin çürük, perküsyon (+).\nDeğerlendirme: Geri dönüşümsüz pulpitis.\nPlan/Yapılan: Kanal tedavisine başlandı, geçici dolgu yapıldı.',
+   '{36}', true, false, 'muayene', null, 'b0000000-0000-4000-8000-000000000001', now() - interval '21 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'klinik',
+   E'36 kanal 2. seans: kanallar genişletildi, kalsiyum hidroksit konuldu. Hassasiyet azaldı.',
+   '{36}', false, false, 'kanal', null, 'b0000000-0000-4000-8000-000000000001', now() - interval '7 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'randevu',
+   'Teyit için arandı; işten çıkışta gelebileceğini söyledi, öğleden sonra saatlerini tercih ediyor.',
+   '{}', false, false, 'randevu_teyit', null, 'b0000000-0000-4000-8000-000000000004', now() - interval '2 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'odeme',
+   'Kalan tutarı kron seansında ödeyeceğini belirtti.',
+   '{}', false, false, 'borc_bilgi', null, 'b0000000-0000-4000-8000-000000000004', now() - interval '3 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000003', 'klinik',
+   'Hasta tedavi sürecinde kaygılı; işlemler adım adım anlatılmalı.',
+   '{}', false, true, null, null, 'b0000000-0000-4000-8000-000000000001', now() - interval '20 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000004', 'klinik',
+   E'İmplant değerlendirmesi: 46 bölgesinde yeterli kemik hacmi var. Panoramik röntgen incelendi.\nDiyabet kontrol altında; cerrahi öncesi kan şekeri değeri istenecek.',
+   '{46}', true, false, 'muayene', null, 'b0000000-0000-4000-8000-000000000001', now() - interval '5 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000004', 'klinik',
+   'Cerrahi öncesi panoramik ve periapikal çekildi, hekime iletildi.',
+   '{46}', false, false, null, null, 'b0000000-0000-4000-8000-000000000005', now() - interval '5 days' + interval '20 minutes'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', 'randevu',
+   'Hatırlatma için SMS yerine telefonla aranmayı tercih ediyor.',
+   '{}', false, false, null, null, 'b0000000-0000-4000-8000-000000000004', now() - interval '40 days'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002', 'klinik',
+   'Diş taşı temizliği yapıldı. Kan sulandırıcı kullandığı için kanama kontrolü yapıldı, sorun olmadı.',
+   '{}', false, false, null, null, 'b0000000-0000-4000-8000-000000000002', now() - interval '31 days');
+
+-- Ek not örneği (kilitli nota sonradan ekleme)
+insert into public.patient_notes (clinic_id, patient_id, kind, body, parent_id, author_member_id, created_at)
+select n.clinic_id, n.patient_id, n.kind, 'Ek: Tomografi gerekmedi; periapikal röntgen yeterli bulundu.', n.id,
+       'b0000000-0000-4000-8000-000000000001', now() - interval '19 days'
+from public.patient_notes n
+where n.patient_id = 'e0000000-0000-4000-8000-000000000003' and n.template = 'muayene';
+
+-- Favori cümleler (Dr. Demo A)
+insert into public.note_phrases (clinic_id, member_id, text) values
+  ('c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Hasta bilgilendirildi, onam alındı.'),
+  ('c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'İşlem sonrası öneriler sözlü ve yazılı verildi.'),
+  ('c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'Lokal anestezi altında çalışıldı, komplikasyon gelişmedi.');
+
+-- Aktivite akışı için "kim yaptı" bilgileri (SAHTE). Seed oturumsuz çalıştığı için elle verilir.
+update public.patients set created_by = 'a0000000-0000-4000-8000-000000000004';
+update public.appointments
+   set created_by = 'a0000000-0000-4000-8000-000000000004',
+       created_at = least(created_at, starts_at - interval '3 days');
+update public.treatments t
+   set created_by = m.user_id,
+       created_at = least(t.created_at, (t.performed_on - 7) + time '10:00'),
+       completed_by = case when t.status = 'tamamlandi' then m.user_id end
+  from public.clinic_members m
+ where m.id = t.doctor_member_id;
+update public.patient_payments
+   set received_by = 'a0000000-0000-4000-8000-000000000004',
+       created_at = paid_on + time '11:30';
+update public.patient_charges
+   set created_by = 'a0000000-0000-4000-8000-000000000004',
+       created_at = now() - interval '20 days';
+update public.tasks set created_by = 'a0000000-0000-4000-8000-000000000003',
+                        created_at = now() - interval '1 day';
+update public.stock_movements
+   set created_at = case when kind = 'giris' then now() - interval '14 days' else now() - interval '4 days' end,
+       created_by = case when kind = 'giris' then 'a0000000-0000-4000-8000-000000000003'::uuid
+                         else 'a0000000-0000-4000-8000-000000000005'::uuid end;
+
+-- Mesai (SAHTE): resepsiyon tableti ve son iş günlerinin giriş/çıkışları
+insert into public.kiosk_devices (member_id, clinic_id, name, paired_by, last_seen_at) values
+  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'Resepsiyon tableti',
+   'a0000000-0000-4000-8000-000000000001', now());
+
+do $$
+declare
+  d date;
+  m record;
+  v_in timestamptz;
+begin
+  for d in select g::date from generate_series(current_date - 13, current_date - 1, interval '1 day') g
+           where extract(isodow from g) between 1 and 6 loop
+    for m in select * from (values
+      ('b0000000-0000-4000-8000-000000000001'::uuid, '08:45'::time, '18:10'::time),
+      ('b0000000-0000-4000-8000-000000000002'::uuid, '09:05'::time, '18:00'::time),
+      ('b0000000-0000-4000-8000-000000000004'::uuid, '08:30'::time, '17:45'::time),
+      ('b0000000-0000-4000-8000-000000000005'::uuid, '08:50'::time, '18:20'::time)
+    ) as t(member_id, t_in, t_out) loop
+      -- Günden güne birkaç dakikalık fark
+      v_in := ((d + m.t_in) at time zone 'Europe/Istanbul') + make_interval(mins => (extract(day from d)::int * 7) % 23 - 8);
+      insert into public.attendance (clinic_id, member_id, check_in, check_out, in_source, out_source)
+      values ('c0000000-0000-4000-8000-000000000001', m.member_id, v_in,
+              ((d + m.t_out) at time zone 'Europe/Istanbul') + make_interval(mins => (extract(day from d)::int * 5) % 31 - 10),
+              'qr', 'qr');
+    end loop;
+  end loop;
+  -- Dün çıkışı okutulmamış bir kayıt (yönetici "Çıkış eksik" olarak görür)
+  update public.attendance set check_out = null, out_source = null
+   where member_id = 'b0000000-0000-4000-8000-000000000005'
+     and check_in = (select max(check_in) from public.attendance where member_id = 'b0000000-0000-4000-8000-000000000005');
+  -- Bugün içeride olanlar (yalnızca mesai saati başladıysa)
+  if now() < (current_date + time '08:40') at time zone 'Europe/Istanbul' then
+    return;
+  end if;
+  insert into public.attendance (clinic_id, member_id, check_in, in_source) values
+    ('c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000004', least(now() - interval '1 hour', (current_date + time '08:34') at time zone 'Europe/Istanbul'), 'qr'),
+    ('c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', least(now() - interval '50 minutes', (current_date + time '08:51') at time zone 'Europe/Istanbul'), 'qr');
+end;
+$$;
+
+-- Raporlar için (SAHTE): prim oranları, tedaviye bağlı ücretler, bu ay tamamlanan tedaviler
+insert into public.doctor_commissions (member_id, clinic_id, rate) values
+  ('b0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 30),
+  ('b0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 25);
+
+-- Mevcut diş taşı ücretini tedavisine bağla
+update public.patient_charges c set treatment_id = t.id
+  from public.treatments t
+ where t.patient_id = c.patient_id and t.procedure = c.description and c.description = 'Diş taşı temizliği';
+
+do $$
+declare
+  v_t uuid;
+  r record;
+begin
+  for r in select * from (values
+    -- hasta, hekim, gün farkı, işlem, diş, tutar (kuruş), fiyat kalemi
+    ('e0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 25, 'Kontrol muayenesi', null,  50000, 'f0000000-0000-4000-8000-000000000001'),
+    ('e0000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000002',  6, 'Dolgu',             '46', 250000, 'f0000000-0000-4000-8000-000000000003'),
+    ('e0000000-0000-4000-8000-000000000006', 'b0000000-0000-4000-8000-000000000001',  3, 'Diş çekimi',        '38', 150000, null),
+    ('e0000000-0000-4000-8000-000000000005', 'b0000000-0000-4000-8000-000000000002',  2, 'Dolgu',             '75', 250000, 'f0000000-0000-4000-8000-000000000003')
+  ) as t(patient_id, doctor_id, days_ago, procedure, tooth, amount, price_item)
+  loop
+    insert into public.treatments (clinic_id, patient_id, doctor_member_id, performed_on, procedure, tooth, status)
+    values ('c0000000-0000-4000-8000-000000000001', r.patient_id::uuid, r.doctor_id::uuid,
+            current_date - r.days_ago, r.procedure, r.tooth, 'tamamlandi')
+    returning id into v_t;
+    insert into public.patient_charges (clinic_id, patient_id, price_item_id, treatment_id, description, tooth, amount, created_by)
+    values ('c0000000-0000-4000-8000-000000000001', r.patient_id::uuid, r.price_item::uuid, v_t,
+            r.procedure, r.tooth, r.amount, 'a0000000-0000-4000-8000-000000000004');
+  end loop;
+end;
+$$;
+
+insert into public.patient_payments (clinic_id, patient_id, amount, method, paid_on, received_by) values
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000006', 150000, 'nakit',       current_date - 3, 'a0000000-0000-4000-8000-000000000004'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000002', 100000, 'kredi_karti', current_date - 6, 'a0000000-0000-4000-8000-000000000004'),
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001',  50000, 'havale',      current_date - 1, 'a0000000-0000-4000-8000-000000000004');

@@ -5,6 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*', '.expo/*'],
+    // supabase/functions: Deno ile çalışan sunucu kodu (uygulama paketine girmez)
+    ignores: ['dist/*', '.expo/*', 'supabase/functions/*'],
   },
 ]);

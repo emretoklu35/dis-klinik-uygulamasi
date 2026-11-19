@@ -23,6 +23,8 @@ export function MediaHomeCard() {
   const { data: requests } = useOpenMediaRequests(undefined, canRequests);
   const { data: pending } = usePendingReviewCount(canReview);
   if (!canRequests && !canReview) return null;
+  // Ana Sayfa'da yalnızca yapılacak bir şey varsa görünür
+  if ((!canReview || pending === 0) && (!canRequests || requests.length === 0)) return null;
 
   return (
     <Card title="Medya" style={gridItem}>

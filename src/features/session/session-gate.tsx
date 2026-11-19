@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { Button, Card, CenteredMessage } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 
+import { KioskScreen } from '@/features/attendance/kiosk-screen';
+
 import { useSession } from './session-context';
 import { SignInScreen } from './sign-in-screen';
 
@@ -13,6 +15,10 @@ export function SessionGate({ children }: { children: ReactNode }) {
 
   switch (state.status) {
     case 'ready':
+      // Resepsiyon tableti (Mesai Ekranı): uygulamanın geri kalanı hiç açılmaz
+      if (state.roles.length > 0 && state.roles.every((r) => r === 'ekran')) {
+        return <KioskScreen deviceName={state.member.name} />;
+      }
       return <>{children}</>;
     case 'signedOut':
       return <SignInScreen />;

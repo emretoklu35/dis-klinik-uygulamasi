@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Card, TextField } from '@/components/ui';
+import { PairDeviceScreen } from '@/features/attendance/kiosk-screen';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
 import { useSession } from './session-context';
@@ -14,6 +15,7 @@ export function SignInScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pairing, setPairing] = useState(false);
 
   const submit = async () => {
     if (!email.trim() || !password) {
@@ -29,6 +31,9 @@ export function SignInScreen() {
       setBusy(false);
     }
   };
+
+  // Resepsiyon tableti: kimsenin şifresi girilmeden, eşleştirme koduyla kurulur
+  if (pairing) return <PairDeviceScreen onCancel={() => setPairing(false)} />;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -75,12 +80,21 @@ export function SignInScreen() {
               />
             </Card>
 
+            <Button
+              label="Mesai ekranı olarak kur"
+              icon="qr-code-outline"
+              variant="secondary"
+              disabled={busy}
+              onPress={() => setPairing(true)}
+            />
+
             {__DEV__ ? (
               <View style={styles.devNote}>
                 <Text style={styles.devTitle}>Yerel geliştirme</Text>
                 <Text style={styles.devText}>
                   Sahte demo hesaplar: sahip.hekim@demo.test, hekim@demo.test, yonetici@demo.test,
-                  resepsiyon@demo.test, asistan@demo.test. Şifre: supabase/seed.sql dosyasında.
+                  resepsiyon@demo.test, asistan@demo.test, ekran@demo.test (resepsiyon tableti).
+                  Şifre: supabase/seed.sql dosyasında.
                 </Text>
               </View>
             ) : null}

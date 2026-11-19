@@ -51,7 +51,20 @@ export type Permission =
   | 'randevu.yaz'
   | 'gorev.oku'
   | 'gorev.yaz'
-  | 'denetim.oku';
+  | 'denetim.oku'
+  | 'not.oku'
+  | 'not.yaz'
+  | 'not.klinik.oku'
+  | 'not.klinik.yaz'
+  | 'not.gizli'
+  | 'seans.kapat'
+  | 'tedavi.ozet.oku'
+  | 'mesai.kendi'
+  | 'mesai.yonet'
+  | 'mesai.ekran'
+  | 'rapor.oku'
+  | 'rapor.kendi'
+  | 'prim.yonet';
 
 export type ClinicInfo = {
   id: string;
@@ -254,4 +267,5 @@ export const roleLabels: Record<ClinicRole, string> = {
   hekim: 'Hekim',
   resepsiyonist: 'Resepsiyon',
   asistan: 'Asistan',
+  ekran: 'Mesai Ekranı',
 };

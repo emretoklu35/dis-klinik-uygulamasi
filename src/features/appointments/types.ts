@@ -14,7 +14,8 @@ export type AppointmentClinical = {
 
 export type Appointment = {
   id: string;
-  patientId: string;
+  /** Hastasız randevuda null (hasta sonra bağlanır) */
+  patientId: string | null;
   patientName: string;
   /** Klinik yerel tarih-saat: 'YYYY-AA-GGTSS:DD' */
   start: string;
@@ -34,7 +35,8 @@ export type Appointment = {
 };
 
 export type AppointmentInput = {
-  patientId: string;
+  /** null: hastasız randevu */
+  patientId: string | null;
   start: string;
   durationMin: number;
   visitType: VisitType;

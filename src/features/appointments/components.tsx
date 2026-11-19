@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
+import { visitTypeColors } from './clinic';
 import type { Appointment } from './types';
 import { appointmentTitle, startTime, statusLabels, statusTone, timeRange } from './utils';
 
@@ -34,6 +35,7 @@ export function AppointmentCard({
                 {a.patientName}
               </Text>
               <Text style={styles.meta} numberOfLines={2}>
+                <Text style={{ color: visitTypeColors[a.visitType] }}>● </Text>
                 {appointmentTitle(a)}
                 {showDoctor ? ` · ${a.doctorName}` : ''} · {a.chairName}
               </Text>
@@ -74,6 +76,7 @@ export function AppointmentChip({ appointment: a }: { appointment: Appointment }
               {a.patientName}
             </Text>
             <Text style={styles.chipMeta} numberOfLines={1}>
+              <Text style={{ color: visitTypeColors[a.visitType] }}>● </Text>
               {appointmentTitle(a)}
             </Text>
           </View>

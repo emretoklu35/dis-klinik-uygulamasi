@@ -71,6 +71,24 @@ function AppTabs() {
           }}
         />
       ))}
+      {/* Sekme çubuğunda görünmeyen ekran: Ana Sayfa → Hızlı İşlemler'den açılır */}
+      {/* href: null bu sürümde ekranı yönlendirir; bunun yerine yalnızca düğmesi gizlenir */}
+      {['aktivite', 'mesai', 'raporlar'].map((name) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            title:
+              name === 'aktivite'
+                ? 'Aktivite Akışı'
+                : name === 'mesai'
+                  ? 'Mesai Takibi'
+                  : 'Raporlar',
+            tabBarButton: () => null,
+            tabBarItemStyle: { display: 'none' },
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

@@ -6,10 +6,10 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, CenteredMessage, Divider, Screen } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { StatusBadge } from '@/features/appointments/components';
-import { AppointmentForm } from '@/features/appointments/form';
+import { AppointmentForm, PatientSheet } from '@/features/appointments/form';
 import { useAppointment } from '@/features/appointments/hooks';
 import { appointmentRepository } from '@/features/appointments/repository';
-import { visitTypeLabels } from '@/features/appointments/clinic';
+import { visitTypeColors, visitTypeLabels } from '@/features/appointments/clinic';
 import type { Appointment, AppointmentStatus } from '@/features/appointments/types';
 import { isActive, timeRange } from '@/features/appointments/utils';
 import { useClinicSession } from '@/features/session/session-context';
@@ -54,7 +54,13 @@ function Details({ a, isClinician }: { a: Appointment; isClinician: boolean }) {
   return (
     <>
       <Card title="Randevu bilgileri">
-        <Row label="Tür" value={visitTypeLabels[a.visitType]} />
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Tür</Text>
+          <View style={styles.typeValue}>
+            <View style={[styles.dot, { backgroundColor: visitTypeColors[a.visitType] }]} />
+            <Text style={styles.rowValue}>{visitTypeLabels[a.visitType]}</Text>
+          </View>
+        </View>
         <Divider />
         <Row label="Hekim" value={a.doctorName} />
         <Divider />
@@ -100,6 +106,7 @@ export default function AppointmentDetailScreen() {
   const [editing, setEditing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pickPatient, setPickPatient] = useState(false);
 
   if (loading && !a) {
     return (
@@ -139,7 +146,54 @@ export default function AppointmentDetailScreen() {
     }
   };
 
-  const [firstName, ...rest] = a.patientName.split(' ');
+  const attach = async (patientId: string) => {
+    setPickPatient(false);
+    setBusy(true);
+    setActionError(null);
+    try {
+      await appointmentRepository.attachPatient(a.id, patientId);
+      reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Hasta bağlanamadı.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Düzenleme tam ekran form (altta sabit İptal/Kaydet)
+  if (editing) {
+    return (
+      <AppointmentForm
+        initial={{
+          patient: a.patientId ? { id: a.patientId, name: a.patientName } : null,
+          noPatient: !a.patientId,
+          date: a.start.slice(0, 10),
+          time: a.start.slice(11, 16),
+          durationMin: a.durationMin,
+          visitType: a.visitType,
+          doctorMemberId: a.doctorMemberId,
+          chairId: a.chairId,
+          deskNote: a.deskNote ?? '',
+          procedure: a.clinical?.procedure ?? '',
+          clinicalNote: a.clinical?.clinicalNote ?? '',
+        }}
+        editingId={a.id}
+        originalStart={a.start}
+        lockPatient={!!a.patientId}
+        submitLabel="Kaydet"
+        onCancel={() => setEditing(false)}
+        onSubmit={async (input) => {
+          await appointmentRepository.update(session.clinic.id, a.id, input, isClinician);
+          // Hastasız randevuya düzenlemede hasta seçildiyse bağla
+          if (!a.patientId && input.patientId) {
+            await appointmentRepository.attachPatient(a.id, input.patientId);
+          }
+          setEditing(false);
+          reload();
+        }}
+      />
+    );
+  }
 
   return (
     <Screen inStack>
@@ -153,13 +207,32 @@ export default function AppointmentDetailScreen() {
           <StatusBadge appointment={a} />
         </View>
         <Divider />
-        <Link
-          href={{ pathname: '/hastalar/[id]', params: { id: a.patientId } }}
-          withAnchor
-          style={styles.patientLink}>
-          <Ionicons name="person-circle-outline" size={18} color={Colors.primary} /> {firstName}{' '}
-          {rest.join(' ')} · Hasta kartını aç
-        </Link>
+        {a.patientId ? (
+          <Link
+            href={{ pathname: '/hastalar/[id]', params: { id: a.patientId } }}
+            withAnchor
+            style={styles.patientLink}>
+            <Ionicons name="person-circle-outline" size={18} color={Colors.primary} />{' '}
+            {a.patientName} · Hasta kartını aç
+          </Link>
+        ) : (
+          <View style={styles.noPatient}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.noPatientTitle}>Hastasız randevu</Text>
+              <Text style={styles.noPatientText}>
+                Hasta bağlanmadan seans kapatılamaz ve randevu tamamlanamaz.
+              </Text>
+            </View>
+            {canWrite ? (
+              <Button
+                label="Hasta bağla"
+                icon="person-add-outline"
+                onPress={() => setPickPatient(true)}
+                disabled={busy}
+              />
+            ) : null}
+          </View>
+        )}
 
         <View style={styles.actions}>
           {(canWrite ? actionsFor(a.status) : []).map((act) => (
@@ -218,33 +291,10 @@ export default function AppointmentDetailScreen() {
         {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
       </Card>
 
-      {editing ? (
-        <AppointmentForm
-          initial={{
-            patient: { id: a.patientId, name: a.patientName },
-            date: a.start.slice(0, 10),
-            time: a.start.slice(11, 16),
-            durationMin: a.durationMin,
-            visitType: a.visitType,
-            doctorMemberId: a.doctorMemberId,
-            chairId: a.chairId,
-            deskNote: a.deskNote ?? '',
-            procedure: a.clinical?.procedure ?? '',
-            clinicalNote: a.clinical?.clinicalNote ?? '',
-          }}
-          editingId={a.id}
-          originalStart={a.start}
-          submitLabel="Değişiklikleri kaydet"
-          onCancel={() => setEditing(false)}
-          onSubmit={async (input) => {
-            await appointmentRepository.update(session.clinic.id, a.id, input, isClinician);
-            setEditing(false);
-            reload();
-          }}
-        />
-      ) : (
-        <Details a={a} isClinician={isClinician} />
-      )}
+      <Details a={a} isClinician={isClinician} />
+      {pickPatient ? (
+        <PatientSheet onClose={() => setPickPatient(false)} onPick={(p) => attach(p.id)} />
+      ) : null}
     </Screen>
   );
 }
@@ -270,6 +320,19 @@ const styles = StyleSheet.create({
   confirmText: { fontSize: 14, color: Colors.danger },
   error: { fontSize: 14, color: Colors.danger },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.lg },
+  typeValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 12, height: 12, borderRadius: 6 },
+  noPatient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.warningSoft,
+  },
+  noPatientTitle: { fontSize: 15, fontWeight: '700', color: Colors.warning },
+  noPatientText: { fontSize: 13, color: Colors.textSecondary },
   rowLabel: { fontSize: 14, color: Colors.textSecondary },
   rowValue: {
     fontSize: 14,

@@ -4,7 +4,49 @@
     {
       "name": "web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "--port",
+        "8081"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "mikrop-avcisi-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/emre/Documents/dis-fircalama && npx expo start --web --port 8095"
+      ],
+      "port": 8095
+    },
+    {
+      "name": "vibe-api",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/emre/Documents/vibe && npm run api:dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "vibe-admin",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/emre/Documents/vibe && npm run dev --workspace @vibe/admin"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "vibe-mobile-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/emre/Documents/vibe/apps/mobile && npx expo start --web --port 8081"
+      ],
       "port": 8081
     }
   ]

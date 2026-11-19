@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator } from 'react-native';
 
 import { Screen } from '@/components/ui';
@@ -35,16 +35,18 @@ export default function NewAppointmentScreen() {
   const dateParam = validDateParam(session.clinic, date);
   const initial = emptyAppointmentForm(session, {
     ...(dateParam ? { date: dateParam } : {}),
-    patient: patient ? { id: patient.id, name: fullName(patient) } : null,
+    patient: patient ? { id: patient.id, name: fullName(patient), phone: patient.phone } : null,
   });
 
+  // Form tam ekran çalışır (altta sabit İptal/Kaydet); Screen sarmalayıcısı kullanılmaz
   return (
-    <Screen inStack>
+    <>
+      <Stack.Screen options={{ title: 'Yeni Randevu' }} />
       <AppointmentForm
         // Hasta yüklendiğinde formun başlangıç değerleriyle yeniden kurulması için
         key={patient?.id ?? 'bos'}
         initial={initial}
-        submitLabel="Randevuyu oluştur"
+        submitLabel="Kaydet"
         onCancel={() => router.back()}
         onSubmit={async (input) => {
           const id = await appointmentRepository.create(
@@ -55,6 +57,6 @@ export default function NewAppointmentScreen() {
           router.replace({ pathname: '/takvim/[id]', params: { id } });
         }}
       />
-    </Screen>
+    </>
   );
 }

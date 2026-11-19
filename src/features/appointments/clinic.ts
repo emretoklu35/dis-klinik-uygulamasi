@@ -14,7 +14,23 @@ export const visitTypeLabels: Record<VisitType, string> = {
   muayene: 'Muayene',
   tedavi: 'Tedavi',
   kontrol: 'Kontrol',
+  cerrahi: 'Cerrahi',
+  diger: 'Diğer',
 };
+
+/** Seçim listesinde ve takvimde türün rengi */
+export const visitTypeColors: Record<VisitType, string> = {
+  muayene: '#38BDF8',
+  tedavi: '#10B981',
+  kontrol: '#F59E0B',
+  cerrahi: '#E11D48',
+  diger: '#64748B',
+};
+
+export const VISIT_TYPE_ORDER: VisitType[] = ['muayene', 'tedavi', 'kontrol', 'cerrahi', 'diger'];
+
+/** Hastası henüz bağlanmamış randevunun görünen adı */
+export const NO_PATIENT_LABEL = 'Hastasız randevu';
 
 /** Hekimin işlem ayrıntısı için hızlı öneriler. */
 export const procedureSuggestions = [

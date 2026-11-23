@@ -2,21 +2,18 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { DentumiLogo } from '@/components/brand';
 import { NavItems } from '@/constants/navigation';
-import { Colors, Fonts, Radius, SidebarWidth, Spacing } from '@/constants/theme';
+import { Colors, Radius, SidebarWidth, Spacing } from '@/constants/theme';
 
 /** Geniş web ekranları için sol menü. */
 export function Sidebar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
-          <Ionicons name="medkit" size={18} color={Colors.mint} />
-        </View>
-        <View>
-          <Text style={styles.brandTitle}>Diş Kliniği</Text>
-          <Text style={styles.brandSubtitle}>Yönetim Paneli</Text>
-        </View>
+        {/* Logodaki gibi: "D" işareti, lacivert yazı ve turkuaz "i" noktası */}
+        <DentumiLogo width={150} />
+        <Text style={styles.brandSubtitle}>Yönetim Paneli</Text>
       </View>
 
       <View style={styles.nav}>
@@ -74,21 +71,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+    alignItems: 'flex-start',
+    gap: 6,
     paddingHorizontal: Spacing.sm,
     marginBottom: Spacing.xxl,
   },
-  logo: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandTitle: { fontSize: 17, fontFamily: Fonts.heading, color: Colors.text },
   brandSubtitle: { fontSize: 12, color: Colors.textMuted },
   nav: { gap: Spacing.xs, flex: 1 },
   item: {

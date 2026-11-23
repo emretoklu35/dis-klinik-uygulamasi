@@ -1,8 +1,8 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DentumiLogo } from '@/components/brand';
 import { Button, Card, TextField } from '@/components/ui';
 import { PairDeviceScreen } from '@/features/attendance/kiosk-screen';
 import { Colors, Radius, Spacing } from '@/constants/theme';
@@ -43,10 +43,7 @@ export function SignInScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.inner}>
             <View style={styles.brand}>
-              <View style={styles.logo}>
-                <Ionicons name="medkit" size={26} color="#FFFFFF" />
-              </View>
-              <Text style={styles.title}>Diş Kliniği</Text>
+              <DentumiLogo width={240} />
               <Text style={styles.subtitle}>Yönetim paneline giriş yapın</Text>
             </View>
 
@@ -109,17 +106,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: Spacing.lg },
   inner: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: Spacing.lg },
-  brand: { alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.sm },
-  logo: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.text },
+  brand: { alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.sm },
   subtitle: { fontSize: 15, color: Colors.textSecondary },
   error: { fontSize: 14, color: Colors.danger },
   devNote: {

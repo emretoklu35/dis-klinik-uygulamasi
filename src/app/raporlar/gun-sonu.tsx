@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -26,14 +26,23 @@ import { formatTL } from '@/lib/money';
 
 const METHOD_ORDER: PaymentMethod[] = ['nakit', 'kredi_karti', 'havale', 'diger'];
 const METHOD_COLORS: Record<PaymentMethod, string> = {
-  nakit: '#E0992E',
+  nakit: '#0F1E2C',
   kredi_karti: Colors.primary,
-  havale: '#2E9A7E',
+  havale: '#5FD3C6',
   diger: '#64748B',
 };
 
 export default function DayEndReport() {
-  const [range, setRange] = useState<DateRange>(defaultRange);
+  const params = useLocalSearchParams<{ from?: string; to?: string }>();
+  // Raporlar ana ekranından gelinirse oradaki dönem; yoksa son 30 gün
+  const [range, setRange] = useState<DateRange>(() =>
+    params.from &&
+    params.to &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.from) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.to)
+      ? { from: params.from, to: params.to }
+      : defaultRange(),
+  );
   const { data, loading, error } = useReport<PaymentRow>(reportsRepository.payments, range);
   const [showDist, setShowDist] = useState(false);
 
@@ -50,8 +59,8 @@ export default function DayEndReport() {
           icon="cash-outline"
           label="Nakit"
           value={formatTL(by('nakit'))}
-          iconBg="#FFF3DC"
-          iconColor="#E0992E"
+          iconBg="#FDF0E1"
+          iconColor="#0F1E2C"
         />
         <StatTile icon="card-outline" label="Kredi Kartı" value={formatTL(by('kredi_karti'))} />
         <StatTile
@@ -152,6 +161,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 40,
   },
-  bar: { height: 6, borderRadius: 3, backgroundColor: '#EEF1F5', overflow: 'hidden' },
+  bar: { height: 6, borderRadius: 3, backgroundColor: '#EEF1F0', overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 3 },
 });

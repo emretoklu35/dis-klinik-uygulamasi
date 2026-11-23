@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet } from '@/components/bottom-sheet';
 import { Screen } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { basisInfo, type CommissionBasis } from '@/features/reports/reports';
 import { useClinicSession } from '@/features/session/session-context';
 
@@ -53,19 +53,19 @@ const REPORTS: Report[] = [
 ];
 
 const groupInfo: Record<Group, { label: string; icon: IconName; color: string; soft: string }> = {
-  finansal: { label: 'Finansal', icon: 'trending-up-outline', color: '#1F8A6E', soft: '#E3F4EE' },
+  finansal: { label: 'Finansal', icon: 'trending-up-outline', color: '#0B6E69', soft: '#DDF1EE' },
   tedavi: {
     label: 'Tedavi',
     icon: 'people-outline',
-    color: Colors.primary,
-    soft: Colors.primarySoft,
+    color: Colors.ink,
+    soft: '#E8ECEF',
   },
 };
 
 const BASIS_OPTIONS: { basis: CommissionBasis; icon: IconName; color: string; soft: string }[] = [
-  { basis: 'odeme_tedavi', icon: 'card-outline', color: '#1F8A6E', soft: '#E3F4EE' },
+  { basis: 'odeme_tedavi', icon: 'card-outline', color: '#0B6E69', soft: '#DDF1EE' },
   { basis: 'tedavi', icon: 'medical-outline', color: Colors.primary, soft: Colors.primarySoft },
-  { basis: 'nakit', icon: 'wallet-outline', color: '#C99A06', soft: '#FFF6DA' },
+  { basis: 'nakit', icon: 'wallet-outline', color: '#B45309', soft: '#FDF0E1' },
 ];
 
 export default function ReportsScreen() {
@@ -168,7 +168,7 @@ export default function ReportsScreen() {
                 router.push({ pathname: '/raporlar/prim', params: { yontem: o.basis } });
               }}
               accessibilityRole="button"
-              style={({ pressed }) => [styles.basis, pressed && { backgroundColor: '#F1F4F8' }]}>
+              style={({ pressed }) => [styles.basis, pressed && { backgroundColor: '#EEF4F2' }]}>
               <View style={[styles.cardIcon, { backgroundColor: o.soft }]}>
                 <Ionicons name={o.icon} size={26} color={o.color} />
               </View>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.pill,
   },
-  filterText: { fontSize: 15 },
+  filterText: { fontSize: 15, fontFamily: Fonts.bodyMedium },
   filterCount: {
     minWidth: 24,
     height: 24,
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterCountText: { fontSize: 12, fontWeight: '600' },
+  filterCountText: { fontSize: 12, fontFamily: Fonts.bodySemi },
   note: { fontSize: 13, color: Colors.textSecondary },
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.sm },
   groupIcon: {
@@ -252,13 +252,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  groupTitle: { fontSize: 18, color: Colors.text },
+  groupTitle: { fontSize: 18, fontFamily: Fonts.headingSemi, color: Colors.text },
   countPill: {
     minWidth: 28,
     height: 24,
     borderRadius: 12,
     paddingHorizontal: 8,
-    backgroundColor: '#E1E4E9',
+    backgroundColor: '#DCE2E0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
   },
   cardIcon: {
@@ -280,13 +280,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: { fontSize: 18, color: Colors.text },
+  cardTitle: { fontSize: 17, fontFamily: Fonts.bodySemi, color: Colors.text },
   cardSub: { fontSize: 14, color: Colors.textMuted },
   chevron: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#E6E8EE',
+    backgroundColor: '#E6EBE9',
     alignItems: 'center',
     justifyContent: 'center',
   },

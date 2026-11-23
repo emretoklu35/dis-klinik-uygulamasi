@@ -13,11 +13,10 @@ import {
   gridItem,
   Screen,
 } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { AppointmentCard } from '@/features/appointments/components';
 import { usePatientAppointments } from '@/features/appointments/hooks';
 import { isActive } from '@/features/appointments/utils';
-import { PatientAvatar } from '@/features/patients/components';
 import { usePatient, useTreatmentSummaries } from '@/features/patients/hooks';
 import { MedicalCard } from '@/features/patients/medical-card';
 import { TreatmentsCard } from '@/features/patients/treatments-card';
@@ -306,10 +305,14 @@ export default function PatientDetailScreen() {
     <Screen inStack>
       <Stack.Screen options={{ title: fullName(patient) }} />
 
-      {/* Kimlik kartı */}
-      <Card>
+      {/* Kimlik + sekmeler: tek başlık alanı */}
+      <View style={styles.header}>
         <View style={styles.identity}>
-          <PatientAvatar patient={patient} size={64} />
+          <View style={styles.squareAvatar}>
+            <Text style={styles.squareAvatarText}>
+              {(patient.firstName[0] ?? '') + (patient.lastName[0] ?? '')}
+            </Text>
+          </View>
           <View style={styles.identityText}>
             <Text style={styles.name}>{fullName(patient)}</Text>
             <Text style={styles.sub}>
@@ -332,9 +335,8 @@ export default function PatientDetailScreen() {
             </View>
           </View>
         </View>
-      </Card>
-
-      <Tabs tabs={tabs} value={activeTab} onChange={setTab} />
+        <Tabs tabs={tabs} value={activeTab} onChange={setTab} />
+      </View>
 
       {/* ------------------------------ GENEL BAKIŞ ------------------------------ */}
       {activeTab === 'genel' ? (
@@ -343,41 +345,43 @@ export default function PatientDetailScreen() {
           <HealthBlock patient={patient} />
 
           {todayVisits.length > 0 ? (
-            <Card title="Bugünkü seans">
+            <View style={styles.visitCard}>
               {todayVisits.map((a, i) => {
                 const closed = isVisitClosed(notes, a.id);
                 return (
                   <Fragment key={a.id}>
-                    {i > 0 ? <Divider /> : null}
+                    {i > 0 ? <View style={styles.visitDivider} /> : null}
                     <View style={styles.visitRow}>
+                      <Text style={styles.visitTime}>{a.start.slice(11, 16)}</Text>
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={styles.visitTitle}>
-                          {a.start.slice(11, 16)} · {visitTypeLabels[a.visitType]}
+                          Bugünkü seans · {visitTypeLabels[a.visitType]}
                         </Text>
-                        <Text style={styles.sub}>
-                          {a.doctorName} · {a.chairName}
+                        <Text style={styles.visitSub}>
+                          {a.doctorName} · {a.chairName} · {a.durationMin} dk
                         </Text>
                       </View>
-                      {closed ? (
-                        <Badge label="Seans kapatıldı" tone="success" />
-                      ) : (
-                        <Button
-                          label="Seansı kapat"
-                          icon="checkmark-done-outline"
-                          onPress={() =>
-                            router.push({ pathname: '/hastalar/seans/[id]', params: { id: a.id } })
-                          }
-                        />
-                      )}
                     </View>
+                    {closed ? (
+                      <View style={styles.visitDone}>
+                        <Ionicons name="checkmark-circle" size={18} color={Colors.mint} />
+                        <Text style={styles.visitDoneText}>Seans kapatıldı</Text>
+                      </View>
+                    ) : (
+                      <Pressable
+                        onPress={() =>
+                          router.push({ pathname: '/hastalar/seans/[id]', params: { id: a.id } })
+                        }
+                        accessibilityRole="button"
+                        style={({ pressed }) => [styles.visitBtn, pressed && { opacity: 0.85 }]}>
+                        <Ionicons name="checkmark" size={18} color="#062B29" />
+                        <Text style={styles.visitBtnText}>Seansı kapat</Text>
+                      </Pressable>
+                    )}
                   </Fragment>
                 );
               })}
-              <Text style={styles.hint}>
-                Seansı kapatınca yapılan tedaviler, ücretler, kullanılan malzemeler ve sonraki adım
-                tek seferde kaydedilir.
-              </Text>
-            </Card>
+            </View>
           ) : null}
 
           {important.length > 0 ? (
@@ -735,9 +739,27 @@ export default function PatientDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    gap: Spacing.md,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
   identity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   identityText: { flex: 1, gap: 2 },
-  name: { fontSize: 22, fontWeight: '700', color: Colors.text },
+  squareAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: Colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  squareAvatarText: { fontFamily: Fonts.heading, fontSize: 20, color: Colors.primaryDeep },
+  name: { fontSize: 24, fontFamily: Fonts.heading, color: Colors.text, letterSpacing: -0.4 },
   sub: { fontSize: 13, color: Colors.textSecondary },
   alert: {
     flexDirection: 'row',
@@ -777,34 +799,58 @@ const styles = StyleSheet.create({
   meta: { fontSize: 12, color: Colors.textMuted },
   link: { fontSize: 14, fontWeight: '600', color: Colors.primary },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
-  tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.pill },
+  tag: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 },
   tagText: { fontSize: 12, fontWeight: '600' },
-  tabs: { gap: Spacing.sm, paddingVertical: 2 },
+  // Altı çizili sekmeler (başlık alanının alt kenarında)
+  tabs: { gap: 22 },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 40,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    minHeight: 44,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
   },
-  tabActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  tabText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
-  tabTextActive: { color: '#FFFFFF' },
+  tabActive: { borderBottomColor: Colors.primary },
+  tabText: { fontSize: 14, fontFamily: Fonts.bodyMedium, color: Colors.textSecondary },
+  tabTextActive: { fontFamily: Fonts.bodySemi, color: Colors.text },
   tabCount: {
     minWidth: 20,
     paddingHorizontal: 5,
     borderRadius: 10,
-    backgroundColor: '#EEF0F3',
+    backgroundColor: '#EEF1F0',
     alignItems: 'center',
   },
-  tabCountActive: { backgroundColor: '#FFFFFF' },
+  tabCountActive: { backgroundColor: Colors.primarySoft },
   tabCountText: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
-  visitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flexWrap: 'wrap' },
-  visitTitle: { fontSize: 15, fontWeight: '600', color: Colors.text },
+  visitCard: {
+    gap: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: 16,
+    backgroundColor: Colors.ink,
+  },
+  visitDivider: { height: 1, backgroundColor: '#2A4256' },
+  visitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  visitTime: {
+    fontFamily: Fonts.heading,
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontVariant: ['tabular-nums'],
+  },
+  visitTitle: { fontSize: 14, fontFamily: Fonts.bodySemi, color: '#FFFFFF' },
+  visitSub: { fontSize: 13, color: Colors.inkMuted },
+  visitBtn: {
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: Colors.mint,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  visitBtnText: { fontSize: 15, fontFamily: Fonts.bodyBold, color: '#062B29' },
+  visitDone: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  visitDoneText: { fontSize: 14, fontFamily: Fonts.bodySemi, color: Colors.mint },
   importantRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
   importantText: { fontSize: 14, color: Colors.text, lineHeight: 20 },
   recentText: { fontSize: 14, color: Colors.text },

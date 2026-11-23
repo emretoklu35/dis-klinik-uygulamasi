@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E6EAF0',
+    borderBottomColor: '#E2E7E5',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
   },
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
   },
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   title: { flex: 1, fontSize: 22, fontWeight: '700', color: Colors.text, marginLeft: Spacing.xs },
-  scroll: { flex: 1, backgroundColor: '#F4F5F7' },
+  scroll: { flex: 1, backgroundColor: '#F3F5F4' },
   content: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
   contentWide: { padding: Spacing.xxl },
   inner: { width: '100%', maxWidth: 820, alignSelf: 'center', gap: Spacing.lg },

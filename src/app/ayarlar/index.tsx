@@ -380,7 +380,7 @@ export default function SettingsScreen() {
   );
 }
 
-const GRAY = '#F4F5F7';
+const GRAY = '#F3F5F4';
 const LINE = '#E3E6EB';
 
 const styles = StyleSheet.create({
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingRight: Spacing.lg,
   },
-  rowPressed: { backgroundColor: '#EBEDF1' },
+  rowPressed: { backgroundColor: '#E6EBE9' },
   rowIcon: { width: 28, textAlign: 'center' },
   rowText: { flex: 1, gap: 3, minWidth: 0 },
   rowTitle: { fontSize: 17, color: Colors.text },

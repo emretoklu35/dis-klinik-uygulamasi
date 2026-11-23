@@ -254,7 +254,7 @@ export function StatTile({
   iconColor?: string;
 }) {
   const filled = tone !== 'plain';
-  const bg = tone === 'orange' ? '#E0992E' : tone === 'green' ? '#2E9A7E' : Colors.surface;
+  const bg = tone === 'orange' ? '#0F1E2C' : tone === 'green' ? '#0B6E69' : Colors.surface;
   return (
     <View style={[styles.tile, { backgroundColor: bg }, filled && styles.tileFilled]}>
       <View
@@ -279,7 +279,7 @@ export function TileGrid({ children }: { children: ReactNode }) {
 // ----------------------------------------------------------------------------
 // Halka grafik
 // ----------------------------------------------------------------------------
-export const CHART_COLORS = ['#2A6FC9', '#1B4566', '#4FA3E0', '#7C9CC4', '#9FC2E8', '#5B6B82'];
+export const CHART_COLORS = ['#0B6E69', '#0F1E2C', '#5FD3C6', '#8FA3AE', '#BFE3DE', '#5B6B82'];
 
 export function Donut({
   parts,
@@ -309,7 +309,7 @@ export function Donut({
             cx={size / 2}
             cy={size / 2}
             r={r}
-            stroke="#E3EAF3"
+            stroke="#E3EFEC"
             strokeWidth={stroke}
             fill="none"
           />
@@ -411,14 +411,14 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#D6E2F2',
-    backgroundColor: '#F4F8FD',
+    borderColor: '#D3DDD9',
+    backgroundColor: '#F7F9F8',
   },
   summaryIcon: {
     width: 52,
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#E2ECF8',
+    backgroundColor: '#DDF1EE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -434,8 +434,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D5DAE1',
-    backgroundColor: '#E6E8EE',
+    borderColor: '#D3DDD9',
+    backgroundColor: '#E6EBE9',
   },
   quickChipOn: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   quickText: { fontSize: 16, color: Colors.text },
@@ -447,8 +447,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#D5DAE1',
-    backgroundColor: '#F4F5F7',
+    borderColor: '#D3DDD9',
+    backgroundColor: '#F3F5F4',
     marginTop: Spacing.sm,
   },
   customBtnOn: { borderColor: '#8B5CF6', borderWidth: 2, backgroundColor: '#F5F0FF' },
@@ -467,8 +467,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
-    backgroundColor: '#F7F8FA',
+    borderColor: '#E2E7E5',
+    backgroundColor: '#F7F9F8',
     gap: Spacing.sm,
   },
   calHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   calWeek: { width: `${100 / 7}%`, textAlign: 'center', fontSize: 12, color: Colors.textMuted },
   calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   calCell: { width: `${100 / 7}%`, height: 44, alignItems: 'center', justifyContent: 'center' },
-  calInside: { backgroundColor: '#E2ECF8' },
+  calInside: { backgroundColor: '#DDF1EE' },
   calDay: {
     width: 40,
     height: 40,
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E6EAF0',
+    borderColor: '#E2E7E5',
   },
   tileFilled: { borderWidth: 0 },
   tileIcon: {
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   donutTop: { fontSize: 22, fontWeight: '600', color: Colors.text },
   donutBottom: { fontSize: 13, color: Colors.textSecondary },
 
-  initials: { backgroundColor: '#E6EDF6', alignItems: 'center', justifyContent: 'center' },
+  initials: { backgroundColor: '#DDF1EE', alignItems: 'center', justifyContent: 'center' },
   initialsText: { fontWeight: '600', color: Colors.primary },
   listHead: {
     flexDirection: 'row',
@@ -538,14 +538,14 @@ export const reportStyles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E6EAF0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   muted: { fontSize: 14, color: Colors.textSecondary },
   small: { fontSize: 13, color: Colors.textMuted },
   title: { fontSize: 18, color: Colors.text },
-  amount: { fontSize: 18, color: '#1F8A6E' },
+  amount: { fontSize: 18, color: '#0B6E69' },
   link: { fontSize: 17, color: Colors.primary },
   badge: {
     paddingHorizontal: 10,

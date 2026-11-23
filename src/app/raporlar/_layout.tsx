@@ -14,7 +14,7 @@ export default function ReportsLayout() {
         headerTitleStyle: { color: Colors.text, fontWeight: '600' },
         headerShadowVisible: false,
         headerBackButtonDisplayMode: 'minimal',
-        contentStyle: { backgroundColor: '#F4F5F7' },
+        contentStyle: { backgroundColor: '#F3F5F4' },
       }}>
       <Stack.Screen name="index" options={{ title: 'Raporlar' }} />
       <Stack.Screen name="gun-sonu" options={{ title: 'Gün sonu Raporu' }} />

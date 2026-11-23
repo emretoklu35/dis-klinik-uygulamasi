@@ -110,7 +110,16 @@ export default function CommissionReport() {
   const basis: CommissionBasis =
     yontem === 'tedavi' || yontem === 'nakit' ? yontem : 'odeme_tedavi';
   const { can } = useClinicSession();
-  const [range, setRange] = useState<DateRange>(defaultRange);
+  const params = useLocalSearchParams<{ from?: string; to?: string }>();
+  // Raporlar ana ekranından gelinirse oradaki dönem; yoksa son 30 gün
+  const [range, setRange] = useState<DateRange>(() =>
+    params.from &&
+    params.to &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.from) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.to)
+      ? { from: params.from, to: params.to }
+      : defaultRange(),
+  );
   const [tab, setTab] = useState<'ozet' | 'detay'>('ozet');
   const fetcher = useCallback(
     (clinicId: string, r: DateRange) => reportsRepository.commissionItems(clinicId, r, basis),
@@ -198,8 +207,8 @@ export default function CommissionReport() {
                   icon="time-outline"
                   label="Kalan Miktar"
                   value={formatTL(sum('amount') - sum('paid'))}
-                  iconBg="#FFF6DA"
-                  iconColor="#C99A06"
+                  iconBg="#FDF0E1"
+                  iconColor="#B45309"
                 />
               </>
             ) : (
@@ -213,8 +222,8 @@ export default function CommissionReport() {
                   icon="list-outline"
                   label={basis === 'nakit' ? 'Ödeme Kalemi' : 'Tedavi Sayısı'}
                   value={String(data.length)}
-                  iconBg="#FFF6DA"
-                  iconColor="#C99A06"
+                  iconBg="#FDF0E1"
+                  iconColor="#B45309"
                 />
               </>
             )}
@@ -239,7 +248,7 @@ export default function CommissionReport() {
                     <Initials name={d.name} size={56} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={rs.title}>{d.name}</Text>
-                      <Text style={[rs.title, { color: '#1F8A6E', fontSize: 22 }]}>
+                      <Text style={[rs.title, { color: '#0B6E69', fontSize: 22 }]}>
                         {formatTL(d.prim)}
                       </Text>
                     </View>
@@ -251,7 +260,7 @@ export default function CommissionReport() {
                     <>
                       <View style={rs.row}>
                         <Text style={[rs.small, { color: Colors.primary, flex: 1 }]}>%{pct}</Text>
-                        <Text style={[rs.small, { color: '#C99A06' }]}>%100</Text>
+                        <Text style={[rs.small, { color: '#B45309' }]}>%100</Text>
                       </View>
                       <View style={styles.bar}>
                         <View style={[styles.barFill, { width: `${pct}%` }]} />
@@ -266,7 +275,7 @@ export default function CommissionReport() {
                         <View style={styles.vline} />
                         <View style={{ flex: 1, gap: 2, alignItems: 'flex-end' }}>
                           <Text style={rs.small}>Kalan Miktar</Text>
-                          <Text style={[rs.muted, { color: '#C99A06' }]}>
+                          <Text style={[rs.muted, { color: '#B45309' }]}>
                             {formatTL(d.amount - d.paid)}
                           </Text>
                         </View>
@@ -303,7 +312,7 @@ export default function CommissionReport() {
 }
 
 const styles = StyleSheet.create({
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E3E8F0' },
+  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E7E5' },
   tab: {
     flex: 1,
     alignItems: 'center',
@@ -313,10 +322,10 @@ const styles = StyleSheet.create({
   },
   tabOn: { borderBottomColor: Colors.primary },
   tabText: { fontSize: 16, color: Colors.textMuted },
-  bar: { height: 10, borderRadius: 5, backgroundColor: '#FDF0C8', overflow: 'hidden' },
+  bar: { height: 10, borderRadius: 5, backgroundColor: '#FDF0E1', overflow: 'hidden' },
   barFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 5 },
   split: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  vline: { width: 1, height: 36, backgroundColor: '#E3E8F0' },
+  vline: { width: 1, height: 36, backgroundColor: '#E2E7E5' },
   rateDot: {
     position: 'absolute',
     right: -2,
@@ -324,7 +333,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#D9A300',
+    backgroundColor: '#B45309',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -333,8 +342,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
-    backgroundColor: '#E3F4EE',
+    backgroundColor: '#DDF1EE',
   },
-  primChipText: { fontSize: 15, color: '#1F8A6E' },
-  detail: { gap: 6, paddingTop: Spacing.sm, borderTopWidth: 1, borderTopColor: '#EEF0F3' },
+  primChipText: { fontSize: 15, color: '#0B6E69' },
+  detail: { gap: 6, paddingTop: Spacing.sm, borderTopWidth: 1, borderTopColor: '#EEF1F0' },
 });

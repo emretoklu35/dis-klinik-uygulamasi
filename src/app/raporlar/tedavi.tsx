@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
@@ -28,7 +28,16 @@ import { formatTL } from '@/lib/money';
 export default function CompletedTreatmentsReport() {
   const { can } = useClinicSession();
   const all = can('rapor.oku');
-  const [range, setRange] = useState<DateRange>(defaultRange);
+  const params = useLocalSearchParams<{ from?: string; to?: string }>();
+  // Raporlar ana ekranından gelinirse oradaki dönem; yoksa son 30 gün
+  const [range, setRange] = useState<DateRange>(() =>
+    params.from &&
+    params.to &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.from) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.to)
+      ? { from: params.from, to: params.to }
+      : defaultRange(),
+  );
   const { data, loading, error } = useReport<CompletedTreatment>(
     reportsRepository.completedTreatments,
     range,
@@ -183,7 +192,7 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
     padding: Spacing.lg,
     borderRadius: 20,
-    backgroundColor: '#DCE7F5',
+    backgroundColor: '#E3EFEC',
   },
   distIcon: {
     width: 48,

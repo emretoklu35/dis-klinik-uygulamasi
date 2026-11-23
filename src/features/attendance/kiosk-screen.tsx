@@ -196,7 +196,7 @@ export function PairDeviceScreen({ onCancel }: { onCancel: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F7FB' },
+  safe: { flex: 1, backgroundColor: '#F4F8F7' },
   top: { alignItems: 'center', paddingTop: Spacing.xl, gap: 2 },
   clinic: { fontSize: 18, fontWeight: '600', color: Colors.textSecondary },
   time: { fontSize: 48, fontWeight: '700', color: Colors.text, fontVariant: ['tabular-nums'] },
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
   },
   label: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center' },
   code: {
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#E3E8F0',
+    backgroundColor: '#E2E7E5',
     overflow: 'hidden',
   },
   progressFill: { height: '100%', backgroundColor: Colors.primary },

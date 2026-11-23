@@ -49,7 +49,7 @@ export const categoryInfo: Record<
     soft: Colors.primarySoft,
   },
   odeme: { label: 'Ödemeler', icon: 'wallet-outline', color: '#B7791F', soft: '#FDF3E3' },
-  stok: { label: 'Stok', icon: 'cube-outline', color: '#475569', soft: '#EEF0F3' },
+  stok: { label: 'Stok', icon: 'cube-outline', color: '#475569', soft: '#EEF1F0' },
   gorev: {
     label: 'Görevler',
     icon: 'checkbox-outline',

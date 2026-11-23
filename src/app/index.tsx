@@ -21,7 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Badge } from '@/components/ui';
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { visitTypeLabels } from '@/features/appointments/clinic';
 import { useAppointmentsRange } from '@/features/appointments/hooks';
 import type { Appointment } from '@/features/appointments/types';
@@ -170,24 +170,24 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     label: 'Yeni Randevu',
     href: '/takvim/yeni',
     permission: 'randevu.yaz',
-    tint: '#1E8A6E',
-    soft: '#E4F4EE',
+    tint: Colors.primary,
+    soft: Colors.primarySoft,
   },
   {
     icon: 'person-add-outline',
     label: 'Yeni Hasta',
     href: '/hastalar/yeni',
     permission: 'hasta.temel.yaz',
-    tint: '#1E8A6E',
-    soft: '#E4F4EE',
+    tint: Colors.primary,
+    soft: Colors.primarySoft,
   },
   {
     icon: 'list-outline',
     label: 'Görev Oluştur',
     href: '/gorevler',
     permission: 'gorev.yaz',
-    tint: '#1E8A6E',
-    soft: '#E4F4EE',
+    tint: Colors.primary,
+    soft: Colors.primarySoft,
   },
   {
     icon: 'globe-outline',
@@ -201,8 +201,8 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     label: 'Raporlar',
     href: '/raporlar',
     permission: ['rapor.oku', 'rapor.kendi'],
-    tint: '#C99A06',
-    soft: '#FFF6DA',
+    tint: Colors.warning,
+    soft: Colors.warningSoft,
   },
   {
     icon: 'time-outline',
@@ -217,8 +217,8 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     label: 'Stok Yönetimi',
     href: '/stok',
     permission: 'stok.oku',
-    tint: '#C99A06',
-    soft: '#FFF6DA',
+    tint: Colors.warning,
+    soft: Colors.warningSoft,
   },
   {
     icon: 'stopwatch-outline',
@@ -350,7 +350,7 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Bildirimler"
                 style={({ pressed }) => [styles.bell, pressed && { opacity: 0.7 }]}>
-                <Ionicons name="notifications-outline" size={24} color={Colors.primary} />
+                <Ionicons name="notifications-outline" size={22} color="#E7EEEC" />
               </Pressable>
             </View>
             {notice ? (
@@ -406,13 +406,18 @@ export default function HomeScreen() {
                 label="Tamamlanan"
               />
               <View style={styles.statDivider} />
-              <Stat icon="clipboard-outline" color="#E0A800" value={dayTasks} label="Görevler" />
+              <Stat
+                icon="clipboard-outline"
+                color={Colors.warning}
+                value={dayTasks}
+                label="Görevler"
+              />
             </View>
           </View>
 
           {/* 4. Bilgi bandı */}
           <View style={styles.banner}>
-            <Ionicons name="information-circle-outline" size={22} color={Colors.primary} />
+            <Ionicons name="information-circle-outline" size={22} color={Colors.primaryDeep} />
             <Text style={styles.bannerText}>{banner}</Text>
           </View>
 
@@ -468,17 +473,18 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F5F7' },
+  safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
   scrollWide: { padding: Spacing.xxl },
   inner: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', gap: Spacing.lg },
 
   // Karşılama kartı
+  // Karşılama kartı: üstü koyu bant, altı beyaz (hafta şeridi + özet)
   hero: {
     backgroundColor: Colors.surface,
-    borderRadius: 28,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E6EAF0',
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   heroTop: {
@@ -487,43 +493,45 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing.xl,
+    backgroundColor: Colors.ink,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#EEF3FB',
-    borderWidth: 2,
-    borderColor: '#C9DBF9',
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: Colors.inkSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 22, fontWeight: '500', color: Colors.primary },
-  greet: { fontSize: 14, color: Colors.textMuted },
-  name: { fontSize: 22, fontWeight: '600', color: Colors.text },
-  clinic: { fontSize: 15, color: Colors.primary },
+  avatarText: { fontSize: 20, fontFamily: Fonts.heading, color: Colors.mint },
+  greet: { fontSize: 13, color: Colors.inkMuted },
+  name: { fontSize: 22, fontFamily: Fonts.heading, color: '#FFFFFF', letterSpacing: -0.3 },
+  clinic: { fontSize: 14, fontFamily: Fonts.bodyMedium, color: Colors.mint },
   bell: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#EEF3FB',
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2A4256',
     alignItems: 'center',
     justifyContent: 'center',
   },
   notice: {
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.inkMuted,
+    backgroundColor: Colors.ink,
   },
 
   week: {
     flexDirection: 'row',
     marginHorizontal: Spacing.md,
+    marginTop: Spacing.md,
     padding: Spacing.xs,
-    borderRadius: 20,
-    backgroundColor: '#F4F5F7',
+    borderRadius: 18,
+    backgroundColor: Colors.background,
     gap: 2,
   },
   day: {
@@ -534,8 +542,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   daySelected: { backgroundColor: Colors.primary },
-  dayName: { fontSize: 12, color: Colors.textMuted },
-  dayNum: { fontSize: 18, fontWeight: '500', color: Colors.text },
+  dayName: { fontSize: 12, fontFamily: Fonts.bodyMedium, color: Colors.textSecondary },
+  dayNum: { fontSize: 18, fontFamily: Fonts.bodySemi, color: Colors.text },
   onPrimary: { color: '#FFFFFF' },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'transparent' },
   dotActive: { backgroundColor: Colors.primary },
@@ -547,9 +555,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.sm,
-    backgroundColor: '#F7F8FA',
-    borderTopWidth: 1,
-    borderTopColor: '#EDF0F4',
+    backgroundColor: Colors.surface,
   },
   stat: {
     flex: 1,
@@ -558,27 +564,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
   },
-  statValue: { fontSize: 20, fontWeight: '600', color: Colors.text },
-  statLabel: { fontSize: 12, color: Colors.textMuted },
-  statDivider: { width: 1, height: 36, backgroundColor: '#E1E5EB' },
+  statValue: {
+    fontSize: 22,
+    fontFamily: Fonts.heading,
+    color: Colors.text,
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: { fontSize: 12, color: Colors.textSecondary },
+  statDivider: { width: 1, height: 36, backgroundColor: Colors.border },
 
   // Bilgi bandı
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: 18,
-    backgroundColor: '#E5EEFB',
-    borderWidth: 1,
-    borderColor: '#B9D0F5',
+    paddingVertical: Spacing.md + 2,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: 14,
+    backgroundColor: Colors.primarySoft,
   },
-  bannerText: { fontSize: 15, color: Colors.primary, flexShrink: 1 },
+  bannerText: {
+    fontSize: 15,
+    fontFamily: Fonts.bodyMedium,
+    color: Colors.primaryDeep,
+    flexShrink: 1,
+  },
 
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: Colors.primary },
-  link: { color: Colors.primary, fontSize: 14 },
+  sectionTitle: { fontSize: 18, fontFamily: Fonts.headingSemi, color: Colors.text },
+  link: { color: Colors.primary, fontSize: 14, fontFamily: Fonts.bodySemi },
 
   // Randevu kartları
   tiles: { gap: Spacing.md, paddingRight: Spacing.lg, paddingBottom: Spacing.sm },
@@ -586,10 +600,10 @@ const styles = StyleSheet.create({
     width: 240,
     padding: Spacing.lg,
     gap: Spacing.sm,
-    borderRadius: 22,
+    borderRadius: 18,
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E6EAF0',
+    borderColor: Colors.border,
   },
   tileCancelled: { opacity: 0.55 },
   tileTop: {
@@ -599,34 +613,39 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   tileTime: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tileTimeText: { fontSize: 18, fontWeight: '500', color: Colors.primary },
-  tilePatient: { fontSize: 18, fontWeight: '500', color: Colors.text },
+  tileTimeText: {
+    fontSize: 18,
+    fontFamily: Fonts.heading,
+    color: Colors.primary,
+    fontVariant: ['tabular-nums'],
+  },
+  tilePatient: { fontSize: 17, fontFamily: Fonts.bodySemi, color: Colors.text },
   strike: { textDecorationLine: 'line-through' },
   tileType: {
     alignSelf: 'flex-start',
     paddingVertical: 4,
     paddingHorizontal: Spacing.md,
-    borderRadius: Radius.pill,
-    backgroundColor: '#EEF5FD',
+    borderRadius: 8,
+    backgroundColor: '#EEF1F0',
   },
-  tileTypeText: { fontSize: 13, color: '#7FAEE8' },
+  tileTypeText: { fontSize: 12, fontFamily: Fonts.bodySemi, color: '#3B4853' },
   tileDoctor: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: 2 },
   miniAvatar: {
     width: 30,
     height: 30,
-    borderRadius: 15,
-    backgroundColor: '#EEF3FB',
+    borderRadius: 9,
+    backgroundColor: Colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  miniAvatarText: { fontSize: 11, fontWeight: '600', color: Colors.primary },
+  miniAvatarText: { fontSize: 11, fontFamily: Fonts.bodyBold, color: Colors.primaryDeep },
   tileDoctorText: { fontSize: 14, color: Colors.textSecondary, flexShrink: 1 },
   empty: {
     padding: Spacing.lg,
     borderRadius: 18,
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E6EAF0',
+    borderColor: Colors.border,
   },
   emptyText: { fontSize: 14, color: Colors.textSecondary },
 
@@ -641,10 +660,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.md,
     padding: Spacing.md,
-    borderRadius: 22,
+    borderRadius: 18,
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E6EAF0',
+    borderColor: Colors.border,
   },
   actionIcon: {
     width: 56,
@@ -653,14 +672,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionLabel: { fontSize: 14, color: Colors.text, textAlign: 'center' },
+  actionLabel: {
+    fontSize: 14,
+    fontFamily: Fonts.bodySemi,
+    color: Colors.text,
+    textAlign: 'center',
+  },
   soon: {
     paddingVertical: 2,
     paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.pill,
-    backgroundColor: '#F1F3F6',
+    borderRadius: 6,
+    backgroundColor: '#EEF1F0',
   },
-  soonText: { fontSize: 10, fontWeight: '600', color: Colors.textMuted },
+  soonText: { fontSize: 10, fontFamily: Fonts.bodySemi, color: Colors.textSecondary },
   count: {
     position: 'absolute',
     top: -6,

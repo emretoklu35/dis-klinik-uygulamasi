@@ -1,23 +1,42 @@
 /**
- * Uygulama genelinde kullanılan renkler, boşluklar ve ölçüler.
- * Açık arka plan + mavi vurgu rengi.
+ * Uygulama genelinde kullanılan renkler, yazı tipleri, boşluklar ve ölçüler.
+ * Görsel kimlik "Mine": mürekkep lacivert + mine yeşili (tek eylem rengi),
+ * kehribar yalnızca dikkat için, kırmızı yalnızca uyarı için.
  */
 
 export const Colors = {
-  background: '#F5F7FB',
+  background: '#F3F5F4',
   surface: '#FFFFFF',
-  border: '#E3E8F0',
-  text: '#111827',
-  textSecondary: '#5B6475',
-  textMuted: '#8A93A5',
-  primary: '#1E6FE8',
-  primarySoft: '#E8F0FD',
-  success: '#16A34A',
-  successSoft: '#E7F6EC',
-  warning: '#D97706',
-  warningSoft: '#FDF3E3',
-  danger: '#DC2626',
-  dangerSoft: '#FDECEC',
+  border: '#E2E7E5',
+  text: '#0F1E2C',
+  textSecondary: '#56636F',
+  textMuted: '#6B7781',
+  primary: '#0B6E69',
+  primarySoft: '#DDF1EE',
+  /** Mine yeşili üzerindeki koyu metin (rozet, etiket) */
+  primaryDeep: '#0B5E5A',
+  /** Koyu yüzeyler (üst bant, öne çıkan kart) */
+  ink: '#0F1E2C',
+  inkSoft: '#1A2E3F',
+  inkMuted: '#9FB2BC',
+  /** Koyu zemin üzerinde mine vurgusu */
+  mint: '#5FD3C6',
+  success: '#15803D',
+  successSoft: '#E3F4EA',
+  warning: '#B45309',
+  warningSoft: '#FDF0E1',
+  danger: '#B42318',
+  dangerSoft: '#FDE8E6',
+} as const;
+
+/** Yazı tipleri (kök düzende yüklenir). Başlık: Space Grotesk, metin: Inter. */
+export const Fonts = {
+  heading: 'SpaceGrotesk_700Bold',
+  headingSemi: 'SpaceGrotesk_600SemiBold',
+  body: 'Inter_400Regular',
+  bodyMedium: 'Inter_500Medium',
+  bodySemi: 'Inter_600SemiBold',
+  bodyBold: 'Inter_700Bold',
 } as const;
 
 export const Spacing = {

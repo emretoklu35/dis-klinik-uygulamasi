@@ -3,6 +3,16 @@ import { DefaultTheme, ThemeProvider } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { StatusBar } from 'expo-status-bar';
 
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import { SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+import { useFonts } from 'expo-font';
+
+import { BottomBar } from '@/components/bottom-bar';
 import { Sidebar } from '@/components/sidebar';
 import { NavItems } from '@/constants/navigation';
 import { Colors } from '@/constants/theme';
@@ -23,6 +33,17 @@ const AppTheme = {
 };
 
 export default function RootLayout() {
+  // Görsel kimliğin yazı tipleri (Inter + Space Grotesk). Yüklenene kadar kısa süre boş ekran.
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <ThemeProvider value={AppTheme}>
       <StatusBar style="dark" />
@@ -42,7 +63,7 @@ function AppTabs() {
   return (
     <Tabs
       // Geniş web ekranında özel sol menü; aksi halde standart alt sekme çubuğu.
-      tabBar={isWide ? (props) => <Sidebar {...props} /> : undefined}
+      tabBar={(props) => (isWide ? <Sidebar {...props} /> : <BottomBar {...props} />)}
       screenOptions={{
         headerShown: false,
         tabBarPosition: isWide ? 'left' : 'bottom',

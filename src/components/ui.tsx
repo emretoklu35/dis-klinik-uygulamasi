@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useIsWideLayout } from '@/hooks/use-is-wide-layout';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -65,9 +65,7 @@ function DemoNotice() {
   return (
     <View style={styles.notice}>
       <Ionicons name="information-circle-outline" size={16} color={Colors.primary} />
-      <Text style={styles.noticeText}>
-        Bu ekrandaki tüm bilgiler sahte demo verisidir.
-      </Text>
+      <Text style={styles.noticeText}>Bu ekrandaki tüm bilgiler sahte demo verisidir.</Text>
     </View>
   );
 }
@@ -166,11 +164,7 @@ export function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
       accessibilityHint={accessibilityHint}
-      style={[
-        styles.segment,
-        selected && styles.segmentSelected,
-        disabled && styles.chipDisabled,
-      ]}>
+      style={[styles.segment, selected && styles.segmentSelected, disabled && styles.chipDisabled]}>
       <Text
         style={[
           styles.segmentText,
@@ -238,7 +232,12 @@ export function TextField({
       <TextInput
         placeholderTextColor={Colors.textMuted}
         accessibilityLabel={label}
-        style={[styles.input, inputProps.multiline && styles.inputMultiline, !!error && styles.inputError, style]}
+        style={[
+          styles.input,
+          inputProps.multiline && styles.inputMultiline,
+          !!error && styles.inputError,
+          style,
+        ]}
         {...inputProps}
       />
       {error ? (
@@ -313,7 +312,7 @@ const styles = StyleSheet.create({
   scrollWide: { padding: Spacing.xxl },
   inner: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', gap: Spacing.lg },
   header: { gap: Spacing.xs },
-  title: { fontSize: 26, fontWeight: '700', color: Colors.text },
+  title: { fontSize: 26, fontFamily: Fonts.heading, color: Colors.text, letterSpacing: -0.4 },
   titleWide: { fontSize: 30 },
   subtitle: { fontSize: 15, color: Colors.textSecondary },
   notice: {
@@ -335,7 +334,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
+  cardTitle: { fontSize: 17, fontFamily: Fonts.headingSemi, color: Colors.text },
   stat: { flexGrow: 1, flexBasis: 150, gap: Spacing.xs },
   statIcon: {
     width: 36,

@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomSheet, SheetOption } from '@/components/bottom-sheet';
 import { Card, Chip } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { PatientAvatar } from '@/features/patients/components';
 import { usePatientList } from '@/features/patients/hooks';
 import { fullName } from '@/features/patients/utils';
@@ -862,10 +862,10 @@ export function AppointmentForm({
   );
 }
 
-const BORDER = '#D6E2F2';
+const BORDER = '#D3DDD9';
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F4F5F7' },
+  screen: { flex: 1, backgroundColor: '#F3F5F4' },
   scroll: { padding: Spacing.lg, paddingBottom: Spacing.xxl },
   scrollWide: { padding: Spacing.xxl },
   inner: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: Spacing.lg },
@@ -873,8 +873,8 @@ const styles = StyleSheet.create({
   section: {
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E7E5',
+    backgroundColor: '#F7F9F8',
     overflow: 'hidden',
   },
   sectionHead: {
@@ -884,23 +884,23 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E3E8F0',
+    borderBottomColor: '#E2E7E5',
   },
   sectionIcon: {
     width: 40,
     height: 40,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sectionTitle: { flex: 1, fontSize: 17, color: Colors.text },
+  sectionTitle: { flex: 1, fontSize: 17, fontFamily: Fonts.headingSemi, color: Colors.text },
   sectionBody: { padding: Spacing.lg, gap: Spacing.lg },
 
   field: { gap: Spacing.sm },
   fieldLabel: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  fieldLabelText: { fontSize: 15, color: Colors.textSecondary },
+  fieldLabelText: { fontSize: 15, fontFamily: Fonts.bodyMedium, color: Colors.textSecondary },
 
   selectBox: {
     flexDirection: 'row',
@@ -912,11 +912,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: BORDER,
-    backgroundColor: '#F7FAFE',
+    backgroundColor: '#F7F9F8',
   },
-  boxTitle: { fontSize: 17, color: Colors.text },
+  boxTitle: { fontSize: 16, fontFamily: Fonts.bodySemi, color: Colors.text },
   boxSub: { fontSize: 14, color: Colors.textSecondary },
-  boxValue: { fontSize: 17, color: Colors.text },
+  boxValue: { fontSize: 16, fontFamily: Fonts.bodySemi, color: Colors.text },
   smallBtn: {
     width: 44,
     height: 44,
@@ -925,13 +925,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#EEF2F7',
   },
-  initials: { backgroundColor: '#E6EDF6', alignItems: 'center', justifyContent: 'center' },
-  initialsText: { fontSize: 15, fontWeight: '600', color: Colors.primary },
+  initials: { backgroundColor: '#DDF1EE', alignItems: 'center', justifyContent: 'center' },
+  initialsText: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Colors.primaryDeep },
   noPatientIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E6EDF6',
+    backgroundColor: '#DDF1EE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
   patientChoice: {
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
     paddingVertical: Spacing.sm,
   },
@@ -950,15 +950,15 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     minHeight: 56,
   },
-  choicePrimary: { fontSize: 18, color: Colors.primary },
-  choiceSecondary: { fontSize: 17, color: Colors.textSecondary },
+  choicePrimary: { fontSize: 17, fontFamily: Fonts.bodySemi, color: Colors.primary },
+  choiceSecondary: { fontSize: 16, fontFamily: Fonts.bodyMedium, color: Colors.textSecondary },
   or: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     paddingHorizontal: Spacing.lg,
   },
-  orLine: { flex: 1, height: 1, backgroundColor: '#D5DAE1' },
+  orLine: { flex: 1, height: 1, backgroundColor: '#D3DDD9' },
   orText: { fontSize: 14, color: Colors.textMuted },
 
   twoCols: { flexDirection: 'row', gap: Spacing.md },
@@ -972,7 +972,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
   },
   stepBtn: {
@@ -991,7 +991,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#D5DAE1',
+    borderColor: '#D3DDD9',
     textAlign: 'center',
     fontSize: 24,
     color: Colors.text,
@@ -1005,7 +1005,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1019,7 +1019,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
     fontSize: 16,
     color: Colors.text,
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
     fontSize: 16,
     color: Colors.text,
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
+    borderColor: '#E2E7E5',
     backgroundColor: Colors.surface,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
@@ -1062,7 +1062,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#E3E8F0',
+    borderTopColor: '#E2E7E5',
   },
   footerInner: { flexDirection: 'row', gap: Spacing.md, width: '100%', alignSelf: 'center' },
   cancelBtn: {
@@ -1074,7 +1074,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelText: { fontSize: 17, color: Colors.primary },
+  cancelText: { fontSize: 16, fontFamily: Fonts.bodySemi, color: Colors.primary },
   saveBtn: {
     flex: 1,
     height: 56,
@@ -1083,7 +1083,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveText: { fontSize: 17, color: '#FFFFFF' },
+  saveText: { fontSize: 16, fontFamily: Fonts.bodyBold, color: '#FFFFFF' },
 
   search: {
     flexDirection: 'row',
@@ -1092,8 +1092,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#D5DAE1',
-    backgroundColor: '#F7F8FA',
+    borderColor: '#D3DDD9',
+    backgroundColor: '#F7F9F8',
   },
   searchInput: { flex: 1, minHeight: 52, fontSize: 16, color: Colors.text },
   patientCard: {
@@ -1103,13 +1103,13 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E3E8F0',
-    backgroundColor: '#F7F8FA',
+    borderColor: '#E2E7E5',
+    backgroundColor: '#F7F9F8',
   },
-  patientName: { fontSize: 17, color: Colors.text },
+  patientName: { fontSize: 16, fontFamily: Fonts.bodySemi, color: Colors.text },
   phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   phone: { fontSize: 14, color: Colors.textSecondary },
-  sheetLabel: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  sheetLabel: { fontSize: 14, fontFamily: Fonts.bodySemi, color: Colors.textSecondary },
   slots: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   slot: {
     width: 76,
@@ -1117,12 +1117,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: BORDER,
-    backgroundColor: '#F7FAFE',
+    backgroundColor: '#F7F9F8',
     alignItems: 'center',
     justifyContent: 'center',
   },
   slotOn: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  slotOff: { backgroundColor: '#F1F2F4', borderColor: '#ECEEF1' },
-  slotText: { fontSize: 15, fontWeight: '600', color: Colors.text },
+  slotOff: { backgroundColor: '#EEF1F0', borderColor: '#ECEEF1' },
+  slotText: { fontSize: 15, fontFamily: Fonts.bodySemi, color: Colors.text },
   slotTextOff: { color: '#B5BCC6', textDecorationLine: 'line-through' },
 });

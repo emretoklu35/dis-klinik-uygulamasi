@@ -3,7 +3,7 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { NavItems } from '@/constants/navigation';
-import { Colors, Radius, SidebarWidth, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, SidebarWidth, Spacing } from '@/constants/theme';
 
 /** Geniş web ekranları için sol menü. */
 export function Sidebar({ state, emitter, navigateToTab }: BottomTabBarProps) {
@@ -11,7 +11,7 @@ export function Sidebar({ state, emitter, navigateToTab }: BottomTabBarProps) {
     <View style={styles.container}>
       <View style={styles.brand}>
         <View style={styles.logo}>
-          <Ionicons name="medkit" size={18} color="#FFFFFF" />
+          <Ionicons name="medkit" size={18} color={Colors.mint} />
         </View>
         <View>
           <Text style={styles.brandTitle}>Diş Kliniği</Text>
@@ -33,7 +33,11 @@ export function Sidebar({ state, emitter, navigateToTab }: BottomTabBarProps) {
               onPress={() => {
                 // Varsayılan alt sekme çubuğuyla aynı davranış: zaten açık sekmeye
                 // tıklanınca iç yığın (ör. hasta kartı) en başa (listeye) döner.
-                const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                const event = emitter.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
                 if (!focused && !event.defaultPrevented) navigateToTab(route.key);
               }}
               style={({ pressed }) => [
@@ -80,11 +84,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brandTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  brandTitle: { fontSize: 17, fontFamily: Fonts.heading, color: Colors.text },
   brandSubtitle: { fontSize: 12, color: Colors.textMuted },
   nav: { gap: Spacing.xs, flex: 1 },
   item: {

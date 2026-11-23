@@ -102,7 +102,7 @@ export function SheetOption({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
-      style={({ pressed }) => [styles.option, pressed && { backgroundColor: '#F1F4F8' }]}>
+      style={({ pressed }) => [styles.option, pressed && { backgroundColor: '#EEF4F2' }]}>
       {left}
       <View style={{ flex: 1, gap: 2 }}>
         <Text
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#D5DAE1',
+    backgroundColor: '#D3DDD9',
     marginTop: Spacing.sm,
   },
   head: {

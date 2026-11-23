@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: Spacing.md,
     borderRadius: Radius.md,
-    backgroundColor: '#F4F5F7',
+    backgroundColor: '#F3F5F4',
   },
   parentLabel: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
   parentText: { fontSize: 14, color: Colors.text },

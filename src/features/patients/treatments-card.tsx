@@ -3,14 +3,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Badge, Button, Card, Chip, Divider, Segmented, TextField } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { procedureSuggestions } from '@/features/appointments/clinic';
 import { needsCompletionRadiograph, type Radiograph } from '@/features/radiographs/radiographs';
 import { useClinicSession } from '@/features/session/session-context';
 import { formatDateInput, parseDateInput, todayKey } from '@/lib/dates';
 
 import { patientRepository } from './repository';
-import type { Patient, Treatment, TreatmentInput, TreatmentStatus } from './types';
-import { formatDate, treatmentStatusLabels } from './utils';
+import type { Patient, Treatment, TreatmentInput, TreatmentKind, TreatmentStatus } from './types';
+import {
+  formatDate,
+  guessTreatmentKind,
+  treatmentKindLabels,
+  treatmentStatusLabels,
+} from './utils';
 
 const statusTone: Record<TreatmentStatus, 'primary' | 'warning' | 'success'> = {
   planlandi: 'primary',
@@ -54,13 +58,30 @@ function TreatmentForm({
   const { clinic, member } = useClinicSession();
   const t = editor.mode === 'edit' ? editor.treatment : null;
   const [dateText, setDateText] = useState(formatDateInput(t?.date ?? todayKey()));
-  const [procedure, setProcedure] = useState(t?.procedure ?? '');
+  const [procedure, setProcedureText] = useState(t?.procedure ?? '');
+  const [kind, setKindValue] = useState<TreatmentKind | undefined>(t?.kind);
+  const labels = Object.values(treatmentKindLabels);
+  /** Tür seçilince açıklama boşsa (ya da başka bir türün adıysa) türün adıyla dolar. */
+  const setKind = (k: TreatmentKind) => {
+    setKindValue(k);
+    if (!procedure.trim() || labels.includes(procedure.trim())) {
+      setProcedureText(treatmentKindLabels[k]);
+    }
+  };
+  /** Tür seçilmeden açıklama yazılırsa tür tahmin edilir. */
+  const setProcedure = (text: string) => {
+    setProcedureText(text);
+    if (!kind) {
+      const guess = guessTreatmentKind(text);
+      if (guess) setKindValue(guess);
+    }
+  };
   const [tooth, setTooth] = useState(t?.tooth ?? '');
   const [status, setStatus] = useState<TreatmentStatus>(t?.status ?? 'tamamlandi');
   const [note, setNote] = useState(t?.note ?? '');
-  const [errors, setErrors] = useState<
-    Partial<Record<'date' | 'procedure' | 'tooth' | 'form', string>>
-  >({});
+  const [errors, setErrors] = useState<Partial<Record<'date' | 'kind' | 'tooth' | 'form', string>>>(
+    {},
+  );
   const [saving, setSaving] = useState(false);
   // Bitim röntgeni uyarısı: engellemez, bir kez onay ister.
   const [radiographWarning, setRadiographWarning] = useState(false);
@@ -71,15 +92,17 @@ function TreatmentForm({
     if (!date) e.date = 'GG.AA.YYYY biçiminde geçerli bir tarih girin.';
     else if (status === 'tamamlandi' && date > todayKey())
       e.date = 'Tamamlanan tedavi ileri tarihli olamaz.';
-    if (!procedure.trim()) e.procedure = 'Yapılan ya da planlanan işlemi yazın.';
+    if (!kind) e.kind = 'Yapılan ya da planlanan işlemi seçin.';
     const teeth = validateTeeth(tooth);
     if (teeth.error) e.tooth = teeth.error;
     setErrors(e);
-    if (Object.keys(e).length > 0 || !date) return;
+    if (Object.keys(e).length > 0 || !date || !kind) return;
+    // Açıklama boşsa türün adı kaydedilir.
+    const name = procedure.trim() || treatmentKindLabels[kind];
     if (
       !confirmed &&
       status === 'tamamlandi' &&
-      needsCompletionRadiograph(procedure) &&
+      needsCompletionRadiograph(name) &&
       !hasCompletionRadiograph
     ) {
       setRadiographWarning(true);
@@ -88,7 +111,8 @@ function TreatmentForm({
 
     const input: TreatmentInput = {
       date,
-      procedure: procedure.trim(),
+      procedure: name,
+      kind,
       tooth: teeth.value,
       status,
       note: note.trim() || undefined,
@@ -119,18 +143,28 @@ function TreatmentForm({
         }))}
         onChange={setStatus}
       />
-      <View style={styles.chips}>
-        {procedureSuggestions.map((p) => (
-          <Chip key={p} label={p} selected={procedure === p} onPress={() => setProcedure(p)} />
-        ))}
+      <View style={{ gap: Spacing.sm }}>
+        <Text style={styles.kindLabel}>
+          Yapılan işlem <Text style={{ color: Colors.danger }}>*</Text>
+        </Text>
+        <View style={styles.chips}>
+          {(Object.keys(treatmentKindLabels) as TreatmentKind[]).map((k) => (
+            <Chip
+              key={k}
+              label={treatmentKindLabels[k]}
+              selected={kind === k}
+              onPress={() => setKind(k)}
+            />
+          ))}
+        </View>
+        {errors.kind ? <Text style={styles.error}>{errors.kind}</Text> : null}
       </View>
       <TextField
-        label="İşlem"
-        required
+        label="Açıklama"
         value={procedure}
         onChangeText={setProcedure}
-        error={errors.procedure}
-        placeholder="Öneriden seçin ya da yazın"
+        placeholder="Ör. İmplant 4.0×10 mm, Panoramik röntgen"
+        hint="Seçtiğiniz işlemin adıyla dolar; gerekirse ayrıntı ekleyin."
       />
       <View style={styles.row}>
         <View style={styles.col}>
@@ -166,9 +200,9 @@ function TreatmentForm({
       {radiographWarning ? (
         <View style={styles.warnBox}>
           <Text style={styles.warnText}>
-            Bitim röntgeni yüklenmedi. {procedure.trim()} için tedavi sonrası röntgen önerilir. Yine
-            de “Tamamlandı” olarak kaydedilsin mi? (Röntgeni sonra Röntgenler bölümünden ekleyip bu
-            tedaviye bağlayabilirsiniz.)
+            Bitim röntgeni yüklenmedi. {procedure.trim() || (kind ? treatmentKindLabels[kind] : '')}{' '}
+            için tedavi sonrası röntgen önerilir. Yine de “Tamamlandı” olarak kaydedilsin mi?
+            (Röntgeni sonra Röntgenler bölümünden ekleyip bu tedaviye bağlayabilirsiniz.)
           </Text>
           <View style={styles.actions}>
             <Button
@@ -265,7 +299,7 @@ export function TreatmentsCard({
                   {t.tooth ? <Text style={styles.tooth}> · Diş {t.tooth}</Text> : null}
                 </Text>
                 <Text style={styles.sub}>
-                  {t.doctorName}
+                  {treatmentKindLabels[t.kind]} · {t.doctorName}
                   {t.note ? ` · ${t.note}` : ''}
                 </Text>
                 {needsCompletionRadiograph(t.procedure) ||
@@ -300,6 +334,7 @@ const styles = StyleSheet.create({
   col: { flexGrow: 1, flexBasis: 220 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm },
   error: { fontSize: 13, color: Colors.danger },
+  kindLabel: { fontSize: 14, fontWeight: '600', color: Colors.text },
   warnBox: {
     gap: Spacing.sm,
     padding: Spacing.md,

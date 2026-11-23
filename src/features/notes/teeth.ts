@@ -5,6 +5,7 @@
  */
 
 import type { Treatment } from '@/features/patients/types';
+import { DIAGNOSTIC_KINDS } from '@/features/patients/utils';
 
 export type Quadrant = { key: 1 | 2 | 3 | 4; label: string; teeth: number[] };
 
@@ -47,9 +48,6 @@ export type ToothState = {
   hasNotes: boolean;
 };
 
-const IMPLANT = /implant/i;
-const NOT_A_PROCEDURE = /değerlendirme|kontrol|muayene/i;
-
 /** Tedavilerden ve notlardan her dişin durumunu çıkarır. */
 export function toothStates(treatments: Treatment[] | null, noteTeeth: number[][]) {
   const map = new Map<number, ToothState>();
@@ -65,8 +63,9 @@ export function toothStates(treatments: Treatment[] | null, noteTeeth: number[][
     for (const n of parseTeeth(t.tooth)) {
       const s = get(n);
       if (t.status === 'tamamlandi') {
-        if (IMPLANT.test(t.procedure) && !NOT_A_PROCEDURE.test(t.procedure)) s.implant = true;
-        else if (!NOT_A_PROCEDURE.test(t.procedure)) s.treated = true;
+        // Renk işlem adından değil, kayıttaki türden okunur; muayene/kontrol ve röntgen dişi işaretlemez.
+        if (t.kind === 'implant') s.implant = true;
+        else if (!DIAGNOSTIC_KINDS.includes(t.kind)) s.treated = true;
       } else {
         s.planned = true;
       }

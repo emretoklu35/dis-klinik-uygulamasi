@@ -39,6 +39,7 @@ export function useTreatmentSummaries(patientId: string | undefined) {
       id: r.id,
       date: r.performed_on,
       procedure: r.procedure,
+      kind: r.kind,
       tooth: r.tooth ?? undefined,
       doctorMemberId: '',
       doctorName: r.doctor_name,

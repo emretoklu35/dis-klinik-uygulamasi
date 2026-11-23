@@ -121,7 +121,7 @@ class SupabasePatientRepository implements PatientRepository {
         supabase
           .from('treatments')
           .select(
-            'id, performed_on, procedure, tooth, status, note, doctor_member_id, clinic_members(display_name)',
+            'id, performed_on, procedure, kind, tooth, status, note, doctor_member_id, clinic_members(display_name)',
           )
           .eq('patient_id', id)
           .order('performed_on', { ascending: false }),
@@ -136,6 +136,7 @@ class SupabasePatientRepository implements PatientRepository {
         id: r.id,
         date: r.performed_on,
         procedure: r.procedure,
+        kind: r.kind,
         tooth: nn(r.tooth),
         doctorMemberId: r.doctor_member_id,
         doctorName: r.clinic_members?.display_name ?? '—',
@@ -248,6 +249,7 @@ class SupabasePatientRepository implements PatientRepository {
           doctor_member_id: doctorMemberId,
           performed_on: input.date,
           procedure: input.procedure,
+          kind: input.kind,
           tooth: input.tooth ?? null,
           status: input.status,
           note: input.note ?? null,
@@ -265,6 +267,7 @@ class SupabasePatientRepository implements PatientRepository {
         .update({
           performed_on: input.date,
           procedure: input.procedure,
+          kind: input.kind,
           tooth: input.tooth ?? null,
           status: input.status,
           note: input.note ?? null,

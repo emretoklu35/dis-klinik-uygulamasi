@@ -14,11 +14,14 @@ type Enums = Database['public']['Enums'];
 
 export type Gender = Enums['gender'];
 export type TreatmentStatus = Enums['treatment_status'];
+export type TreatmentKind = Enums['treatment_kind'];
 
 export type Treatment = {
   id: string;
   date: string; // gün anahtarı
   procedure: string;
+  /** Diş şeması rengi bu türden okunur */
+  kind: TreatmentKind;
   tooth?: string;
   doctorMemberId: string;
   doctorName: string;
@@ -30,6 +33,7 @@ export type Treatment = {
 export type TreatmentInput = {
   date: string; // gün anahtarı
   procedure: string;
+  kind: TreatmentKind;
   tooth?: string;
   status: TreatmentStatus;
   note?: string;

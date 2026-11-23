@@ -711,14 +711,14 @@ isOneToOne: false
                   ]
                 },"treatments": {
                   Row: {
-                    "clinic_id": string,"completed_at": string | null,"completed_by": string | null,"created_at": string,"created_by": string | null,"doctor_member_id": string,"id": string,"note": string | null,"patient_id": string,"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string | null
+                    "clinic_id": string,"completed_at": string | null,"completed_by": string | null,"created_at": string,"created_by": string | null,"doctor_member_id": string,"id": string,"kind": Database["public"]['Enums']["treatment_kind"],"note": string | null,"patient_id": string,"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "clinic_id": string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id": string,"id"?: string,"note"?: string | null,"patient_id": string,"performed_on": string,"procedure": string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
+                    "clinic_id": string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id": string,"id"?: string,"kind": Database["public"]['Enums']["treatment_kind"],"note"?: string | null,"patient_id": string,"performed_on": string,"procedure": string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
                   }
                   Update: {
-                    "clinic_id"?: string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id"?: string,"id"?: string,"note"?: string | null,"patient_id"?: string,"performed_on"?: string,"procedure"?: string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
+                    "clinic_id"?: string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["treatment_kind"],"note"?: string | null,"patient_id"?: string,"performed_on"?: string,"procedure"?: string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
                   }
                   Relationships: [
                     {
@@ -868,12 +868,12 @@ isOneToOne: false
                            },
 "treatment_summaries":
 { Args: { "p_patient": string }; Returns: {
-              "doctor_name": string,"id": string,"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string
+              "doctor_name": string,"id": string,"kind": Database["public"]['Enums']["treatment_kind"],"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string
             }[]
                            }
           }
           Enums: {
-            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan"|"ekran","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","note_kind": "klinik"|"randevu"|"odeme","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","stock_category": "sarf"|"anestezik"|"dolgu"|"implant"|"frez_alet"|"sterilizasyon"|"ortodonti"|"diger","stock_movement_kind": "giris"|"kullanim"|"sayim"|"fire","task_priority": "yuksek"|"normal","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"|"cerrahi"|"diger"
+            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan"|"ekran","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","note_kind": "klinik"|"randevu"|"odeme","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","stock_category": "sarf"|"anestezik"|"dolgu"|"implant"|"frez_alet"|"sterilizasyon"|"ortodonti"|"diger","stock_movement_kind": "giris"|"kullanim"|"sayim"|"fire","task_priority": "yuksek"|"normal","treatment_kind": "muayene"|"rontgen"|"temizlik"|"dolgu"|"kanal"|"cekim"|"implant"|"kron_kopru"|"protez"|"dis_eti"|"ortodonti"|"beyazlatma"|"cerrahi"|"diger","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"|"cerrahi"|"diger"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -993,7 +993,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan", "ekran"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"note_kind": ["klinik", "randevu", "odeme"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"stock_category": ["sarf", "anestezik", "dolgu", "implant", "frez_alet", "sterilizasyon", "ortodonti", "diger"],"stock_movement_kind": ["giris", "kullanim", "sayim", "fire"],"task_priority": ["yuksek", "normal"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol", "cerrahi", "diger"]
+            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan", "ekran"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"note_kind": ["klinik", "randevu", "odeme"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"stock_category": ["sarf", "anestezik", "dolgu", "implant", "frez_alet", "sterilizasyon", "ortodonti", "diger"],"stock_movement_kind": ["giris", "kullanim", "sayim", "fire"],"task_priority": ["yuksek", "normal"],"treatment_kind": ["muayene", "rontgen", "temizlik", "dolgu", "kanal", "cekim", "implant", "kron_kopru", "protez", "dis_eti", "ortodonti", "beyazlatma", "cerrahi", "diger"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol", "cerrahi", "diger"]
           }
         }
 } as const

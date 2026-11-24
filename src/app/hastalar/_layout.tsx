@@ -24,6 +24,7 @@ export default function PatientsLayout() {
       <Stack.Screen name="[id]" options={{ title: 'Hasta Kartı' }} />
       <Stack.Screen name="yeni" options={{ title: 'Yeni Hasta' }} />
       <Stack.Screen name="seans/[id]" options={{ title: 'Seansı Kapat' }} />
+      <Stack.Screen name="proforma/[planId]" options={{ title: 'Proforma' }} />
     </Stack>
   );
 }

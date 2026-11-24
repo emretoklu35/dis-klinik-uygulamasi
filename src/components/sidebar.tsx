@@ -8,13 +8,23 @@ import { Colors, Radius, SidebarWidth, Spacing } from '@/constants/theme';
 
 /** Geniş web ekranları için sol menü. */
 export function Sidebar({ state, emitter, navigateToTab }: BottomTabBarProps) {
+  const home = state.routes.find((r) => r.name === 'index');
+  const onHome = home !== undefined && state.routes[state.index]?.key === home.key;
+
   return (
     <View style={styles.container}>
-      <View style={styles.brand}>
+      {/* Logoya tıklayınca Ana Sayfa (zaten oradaysa bir şey olmaz) */}
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel="Dentumi · Ana Sayfa'ya git"
+        onPress={() => {
+          if (home && !onHome) navigateToTab(home.key);
+        }}
+        style={({ pressed }) => [styles.brand, pressed && !onHome && { opacity: 0.7 }]}>
         {/* Logodaki gibi: "D" işareti, lacivert yazı ve turkuaz "i" noktası */}
         <DentumiLogo width={150} />
         <Text style={styles.brandSubtitle}>Yönetim Paneli</Text>
-      </View>
+      </Pressable>
 
       <View style={styles.nav}>
         {state.routes.map((route, index) => {

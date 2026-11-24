@@ -151,7 +151,9 @@ export default function SettingsScreen() {
 
   const showUsers = can('uye.yonet');
   const showTreatments = can('odeme.oku');
+  const showClinic = can('klinik.yonet') || can('indirim.sinirsiz');
   const clinicRows = [
+    showClinic ? 'clinic' : null,
     showUsers ? 'users' : null,
     'files',
     can('mesai.yonet') ? 'kiosk' : null,
@@ -244,6 +246,15 @@ export default function SettingsScreen() {
           </Section>
 
           <Section title="Klinik Yönetimi">
+            {showClinic ? (
+              <SettingRow
+                icon="business-outline"
+                title="Klinik Bilgileri"
+                subtitle="Proformadaki adres, telefon, e-posta ve indirim sınırı"
+                onPress={() => router.push('/ayarlar/klinik')}
+                last={lastClinicRow === 'clinic'}
+              />
+            ) : null}
             {showUsers ? (
               <SettingRow
                 icon="people-outline"

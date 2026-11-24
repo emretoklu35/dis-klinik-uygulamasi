@@ -21,6 +21,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="fiyatlar" options={{ title: 'Fiyat listesi' }} />
       <Stack.Screen name="mesai-ekrani" options={{ title: 'Mesai Ekranı' }} />
       <Stack.Screen name="prim-oranlari" options={{ title: 'Prim Oranları' }} />
+      <Stack.Screen name="klinik" options={{ title: 'Klinik Bilgileri' }} />
     </Stack>
   );
 }

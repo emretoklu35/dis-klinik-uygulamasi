@@ -63,9 +63,70 @@ export type Payment = {
   cancelled: Cancellation | null;
 };
 
+export type InstallmentStatus = 'odendi' | 'kismi' | 'gecikti' | 'bekliyor';
+
+export type Installment = {
+  id: string;
+  planId: string;
+  seq: number;
+  count: number;
+  dueDate: string;
+  amount: number;
+  /** Tahsilatlardan bu taksite düşen tutar (otomatik) */
+  paid: number;
+  status: InstallmentStatus;
+};
+
+export type PaymentPlan = {
+  id: string;
+  title: string;
+  total: number;
+  note?: string;
+  createdAt: string;
+  createdByName?: string;
+  installments: Installment[];
+};
+
+/** Takip listesi satırı: vadesi gelen / geciken taksit ve hastası */
+export type DueInstallment = Installment & {
+  patientId: string;
+  patientName: string;
+  planTitle: string;
+};
+
+export const installmentStatusLabels: Record<InstallmentStatus, string> = {
+  odendi: 'Ödendi',
+  kismi: 'Kısmen ödendi',
+  gecikti: 'Gecikti',
+  bekliyor: 'Bekliyor',
+};
+
+type InstallmentRow = {
+  id: string | null;
+  plan_id: string | null;
+  seq: number | null;
+  count: number | null;
+  due_date: string | null;
+  amount: number | null;
+  paid: number | null;
+  status: string | null;
+};
+const toInstallment = (r: InstallmentRow): Installment => ({
+  id: r.id!,
+  planId: r.plan_id!,
+  seq: r.seq!,
+  count: r.count!,
+  dueDate: r.due_date!,
+  amount: r.amount!,
+  paid: r.paid ?? 0,
+  status: (r.status ?? 'bekliyor') as InstallmentStatus,
+});
+
 export type PatientAccount = {
   charges: Charge[];
   payments: Payment[];
+  /** Açık (iptal edilmemiş) ödeme planları, taksitleriyle */
+  plans: PaymentPlan[];
   totalCharged: number;
   totalPaid: number;
   remaining: number;
@@ -159,7 +220,7 @@ export const paymentRepository = {
 
   // ---------------- Hasta hesabı ----------------
   async getAccount(clinicId: string, patientId: string): Promise<PatientAccount> {
-    const [chargeRows, paymentRows, name] = await Promise.all([
+    const [chargeRows, paymentRows, name, planRows, installmentRows] = await Promise.all([
       supabase
         .from('patient_charges')
         .select(
@@ -178,7 +239,30 @@ export const paymentRepository = {
         .order('paid_on', { ascending: false })
         .order('created_at', { ascending: false }),
       memberNames(clinicId),
+      supabase
+        .from('payment_plans')
+        .select('id, title, total, note, created_at, created_by_name')
+        .eq('clinic_id', clinicId)
+        .eq('patient_id', patientId)
+        .is('cancelled_at', null)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('installment_status')
+        .select('id, plan_id, seq, count, due_date, amount, paid, status')
+        .eq('clinic_id', clinicId)
+        .eq('patient_id', patientId)
+        .order('seq', { ascending: true }),
     ]);
+    const installments = unwrap(installmentRows, 'Taksitler yüklenemedi.').map(toInstallment);
+    const plans: PaymentPlan[] = unwrap(planRows, 'Ödeme planları yüklenemedi.').map((p) => ({
+      id: p.id,
+      title: p.title,
+      total: p.total,
+      note: p.note ?? undefined,
+      createdAt: p.created_at,
+      createdByName: p.created_by_name ?? undefined,
+      installments: installments.filter((i) => i.planId === p.id),
+    }));
     const chargesRaw = unwrap(chargeRows, 'Borç kalemleri yüklenemedi.');
     const paymentsRaw = unwrap(paymentRows, 'Tahsilatlar yüklenemedi.');
 
@@ -233,7 +317,67 @@ export const paymentRepository = {
 
     const totalCharged = charges.filter((c) => !c.cancelled).reduce((s, c) => s + c.amount, 0);
     const totalPaid = payments.filter((p) => !p.cancelled).reduce((s, p) => s + p.amount, 0);
-    return { charges, payments, totalCharged, totalPaid, remaining: totalCharged - totalPaid };
+    return {
+      charges,
+      payments,
+      plans,
+      totalCharged,
+      totalPaid,
+      remaining: totalCharged - totalPaid,
+    };
+  },
+
+  async createPaymentPlan(
+    patientId: string,
+    title: string,
+    note: string | undefined,
+    installments: { dueDate: string; amount: number }[],
+  ) {
+    const { data, error } = await supabase.rpc('create_payment_plan', {
+      p_patient: patientId,
+      p_title: title,
+      p_note: note ?? '',
+      p_installments: installments.map((i) => ({ due_date: i.dueDate, amount: i.amount })),
+    });
+    if (error || !data) throw new Error(error?.message || 'Ödeme planı oluşturulamadı.');
+    return data;
+  },
+
+  async cancelPaymentPlan(planId: string, reason: string) {
+    const { error } = await supabase.rpc('cancel_payment_plan', {
+      p_plan: planId,
+      p_reason: reason,
+    });
+    if (error) throw new Error(error.message || 'Ödeme planı iptal edilemedi.');
+  },
+
+  /** Ödenmemiş ve vadesi en geç `untilDay` olan taksitler (gecikenler dahil), vade sırasıyla */
+  async listDueInstallments(clinicId: string, untilDay: string): Promise<DueInstallment[]> {
+    const rows = unwrap(
+      await supabase
+        .from('installment_status')
+        .select('id, plan_id, patient_id, plan_title, seq, count, due_date, amount, paid, status')
+        .eq('clinic_id', clinicId)
+        .neq('status', 'odendi')
+        .lte('due_date', untilDay)
+        .order('due_date', { ascending: true }),
+      'Taksitler yüklenemedi.',
+    );
+    const ids = [...new Set(rows.map((r) => r.patient_id!))];
+    const names = new Map<string, string>();
+    if (ids.length) {
+      const pats = unwrap(
+        await supabase.from('patients').select('id, first_name, last_name').in('id', ids),
+        'Hastalar yüklenemedi.',
+      );
+      for (const p of pats) names.set(p.id, `${p.first_name} ${p.last_name}`);
+    }
+    return rows.map((r) => ({
+      ...toInstallment(r),
+      patientId: r.patient_id!,
+      patientName: names.get(r.patient_id!) ?? '—',
+      planTitle: r.plan_title ?? '',
+    }));
   },
 
   async addCharge(

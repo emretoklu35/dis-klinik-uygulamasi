@@ -17,9 +17,9 @@ import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { AppointmentCard } from '@/features/appointments/components';
 import { usePatientAppointments } from '@/features/appointments/hooks';
 import { isActive } from '@/features/appointments/utils';
-import { usePatient, useTreatmentSummaries } from '@/features/patients/hooks';
+import { usePatient, useTreatmentPlans, useTreatmentSummaries } from '@/features/patients/hooks';
 import { MedicalCard } from '@/features/patients/medical-card';
-import { TreatmentsCard } from '@/features/patients/treatments-card';
+import { TreatmentPlansTab } from '@/features/patients/treatment-plans';
 import { PaymentsCard } from '@/features/payments/payments-card';
 import { usePatientAccount } from '@/features/payments/payments';
 import {
@@ -31,7 +31,6 @@ import {
   type HistoryEvent,
 } from '@/features/notes/notes-panel';
 import { isVisitClosed, kindLabels, usePatientNotes, type Note } from '@/features/notes/notes';
-import { Odontogram } from '@/features/notes/odontogram';
 import { parseTeeth, toothStates } from '@/features/notes/teeth';
 import { MediaCard } from '@/features/radiographs/media-card';
 import { useOpenMediaRequests, usePatientRadiographs } from '@/features/radiographs/radiographs';
@@ -209,7 +208,11 @@ export default function PatientDetailScreen() {
   );
   const { data: notes, reload: reloadNotes } = usePatientNotes(id);
   const { data: account } = usePatientAccount(id);
-  const { data: summaries } = useTreatmentSummaries(id);
+  const { data: summaries, reload: reloadSummaries } = useTreatmentSummaries(id);
+  const { data: plans, reload: reloadPlans } = useTreatmentPlans(
+    id,
+    can('tedavi.oku') || can('tedavi.ozet.oku'),
+  );
   const [tooth, setTooth] = useState<number | undefined>();
   const tab: TabKey = sekme ?? 'genel';
   const setTab = (t: TabKey) => router.setParams({ sekme: t });
@@ -253,8 +256,14 @@ export default function PatientDetailScreen() {
   const lastPast = appointments.filter((a) => a.start < now && a.status === 'tamamlandi').at(-1);
   const important = notes.filter((n) => n.important);
   // Hekim tam tedavi kaydını, yönetici/sahip özetini görür (null: hiç göremez)
-  const treatmentList = patient.treatments ?? summaries;
+  const allTreatments = patient.treatments ?? summaries;
   const readOnlyTreatments = patient.treatments === null;
+  // Planlanan işlemler yalnızca uygulanan plandan; tamamlananlar her plandan (geçmiş)
+  const activePlanId = plans.find((p) => p.isActive)?.id;
+  const treatmentList =
+    allTreatments?.filter(
+      (t) => t.status === 'tamamlandi' || !activePlanId || t.planId === activePlanId,
+    ) ?? null;
   const events = buildHistory({
     treatments: treatmentList ?? [],
     appointments,
@@ -279,7 +288,7 @@ export default function PatientDetailScreen() {
     { key: 'genel', label: 'Genel Bakış' },
     { key: 'notlar', label: 'Notlar', count: notes.length },
     ...(showTreatments
-      ? [{ key: 'tedavi' as const, label: 'Tedaviler', count: openTreatments.length }]
+      ? [{ key: 'tedavi' as const, label: 'Tedavi Planları', count: openTreatments.length }]
       : []),
     ...(showMedia ? [{ key: 'medya' as const, label: 'Medya' }] : []),
     ...(showPayments ? [{ key: 'odeme' as const, label: 'Ödemeler' }] : []),
@@ -295,9 +304,6 @@ export default function PatientDetailScreen() {
     .sort((a, b) => (a.sortKey < b.sortKey ? 1 : -1))
     .slice(0, 4);
 
-  const toothTreatments = tooth
-    ? (treatmentList ?? []).filter((t) => parseTeeth(t.tooth).includes(tooth))
-    : [];
   const toothNotes = tooth ? notes.filter((n) => n.teeth.includes(tooth)) : [];
   const toothMedia = tooth ? radiographs.filter((r) => parseTeeth(r.tooth).includes(tooth)) : [];
 
@@ -545,48 +551,31 @@ export default function PatientDetailScreen() {
       {/* ------------------------------- TEDAVİLER ------------------------------- */}
       {activeTab === 'tedavi' ? (
         <>
-          <Card title="Diş şeması">
-            <Text style={styles.hint}>
-              Bir dişe basınca o dişin tedavileri, notları ve görüntüleri aşağıda listelenir.
-            </Text>
-            <Odontogram
-              states={states}
-              selected={tooth ? [tooth] : []}
-              onPress={(n) => setTooth((t) => (t === n ? undefined : n))}
-            />
-          </Card>
+          <TreatmentPlansTab
+            patientId={patient.id}
+            treatments={allTreatments ?? []}
+            plans={plans}
+            states={states}
+            tooth={tooth}
+            onTooth={setTooth}
+            readOnly={readOnlyTreatments}
+            radiographs={radiographs}
+            onChanged={() => {
+              reload();
+              reloadPlans();
+              reloadSummaries();
+            }}
+          />
 
-          {tooth ? (
+          {/* Seçili dişin notları ve görüntüleri (işlemleri yukarıdaki listede) */}
+          {tooth && toothNotes.length + toothMedia.length > 0 ? (
             <Card
-              title={`${tooth} numaralı diş`}
+              title={`${tooth} numaralı diş · notlar ve görüntüler`}
               action={
                 <Pressable onPress={() => setTab('notlar')} accessibilityRole="link" hitSlop={8}>
                   <Text style={styles.link}>Notlarda göster</Text>
                 </Pressable>
               }>
-              {toothTreatments.length + toothNotes.length + toothMedia.length === 0 ? (
-                <Text style={styles.empty}>
-                  Bu dişe bağlı kayıt yok. Notlar sekmesinden bu dişe not ekleyebilirsiniz.
-                </Text>
-              ) : null}
-              {toothTreatments.map((t) => (
-                <View key={t.id} style={styles.openRow}>
-                  <Text style={styles.openTitle}>
-                    {t.procedure}
-                    <Text style={styles.sub}> · {formatDate(t.date)}</Text>
-                  </Text>
-                  <Badge
-                    label={treatmentStatusLabels[t.status]}
-                    tone={
-                      t.status === 'tamamlandi'
-                        ? 'success'
-                        : t.status === 'devam'
-                          ? 'warning'
-                          : 'primary'
-                    }
-                  />
-                </View>
-              ))}
               {toothMedia.map((r) => (
                 <Text key={r.id} style={styles.sub}>
                   Görüntü · {formatDate(r.takenOn)}
@@ -599,59 +588,15 @@ export default function PatientDetailScreen() {
             </Card>
           ) : null}
 
-          {readOnlyTreatments ? (
-            // Yönetici / sahip: yalnızca özet; ekleme ve düzenleme yok
-            <Card title="Tedaviler">
-              <Text style={styles.hint}>
-                Salt okunur. Tedavi notları ve sağlık ayrıntıları gösterilmez; tedavileri hekim
-                girer.
+          {!readOnlyTreatments && can('seans.kapat') ? (
+            <View style={styles.hintBox}>
+              <Ionicons name="bulb-outline" size={18} color={Colors.primary} />
+              <Text style={styles.hintBoxText}>
+                Bugün yapılan işlemleri Genel Bakış’taki “Seansı kapat” ile kaydetmeniz önerilir:
+                tedavi, ücret, kullanılan malzeme ve seans notu birlikte işlenir.
               </Text>
-              {(treatmentList ?? []).length === 0 ? (
-                <Text style={styles.empty}>Kayıtlı tedavi yok.</Text>
-              ) : (
-                [...(treatmentList ?? [])].reverse().map((t, i) => (
-                  <Fragment key={t.id}>
-                    {i > 0 ? <Divider /> : null}
-                    <View style={styles.openRow}>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={styles.openTitle}>
-                          {t.procedure}
-                          {t.tooth ? <Text style={styles.tooth}> · {t.tooth}</Text> : null}
-                        </Text>
-                        <Text style={styles.sub}>
-                          {formatDate(t.date)} · {t.doctorName}
-                        </Text>
-                      </View>
-                      <Badge
-                        label={treatmentStatusLabels[t.status]}
-                        tone={
-                          t.status === 'tamamlandi'
-                            ? 'success'
-                            : t.status === 'devam'
-                              ? 'warning'
-                              : 'primary'
-                        }
-                      />
-                    </View>
-                  </Fragment>
-                ))
-              )}
-            </Card>
-          ) : (
-            <>
-              {can('seans.kapat') ? (
-                <View style={styles.hintBox}>
-                  <Ionicons name="bulb-outline" size={18} color={Colors.primary} />
-                  <Text style={styles.hintBoxText}>
-                    Bugün yapılan işlemleri Genel Bakış’taki “Seansı kapat” ile kaydetmeniz
-                    önerilir: tedavi, ücret, kullanılan malzeme ve seans notu birlikte işlenir.
-                    Buradan yalnızca plan ekleyin ya da düzeltme yapın.
-                  </Text>
-                </View>
-              ) : null}
-              <TreatmentsCard patient={patient} radiographs={radiographs} onSaved={reload} />
-            </>
-          )}
+            </View>
+          ) : null}
         </>
       ) : null}
 

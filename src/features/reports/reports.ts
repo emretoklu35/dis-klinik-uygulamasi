@@ -165,7 +165,56 @@ export type CommissionItem = {
   primPending: number;
 };
 
+/** Yarım kalan tedavi planı (uygulanan planda tamamlanmamış işlem var) */
+export type UnfinishedPlan = {
+  planId: string;
+  planTitle: string;
+  planCreatedAt: string;
+  locked: boolean;
+  patientId: string;
+  patientName: string;
+  patientPhone?: string;
+  doctorId: string;
+  doctorName: string;
+  totalItems: number;
+  doneItems: number;
+  startedItems: number;
+  totalAmount: number;
+  doneAmount: number;
+  kinds: string[];
+  lastDoneAt?: string;
+  nextAppointment?: string;
+};
+
 export const reportsRepository = {
+  async unfinishedPlans(clinicId: string, r: DateRange): Promise<UnfinishedPlan[]> {
+    const { data, error } = await supabase.rpc('report_unfinished_plans', {
+      p_clinic: clinicId,
+      p_from: r.from,
+      p_to: r.to,
+    });
+    if (error) throw toAppError(error, 'Rapor yüklenemedi.');
+    return (data ?? []).map((x) => ({
+      planId: x.plan_id,
+      planTitle: x.plan_title,
+      planCreatedAt: x.plan_created_at,
+      locked: x.locked,
+      patientId: x.patient_id,
+      patientName: x.patient_name,
+      patientPhone: x.patient_phone ?? undefined,
+      doctorId: x.doctor_member_id,
+      doctorName: x.doctor_name,
+      totalItems: x.total_items,
+      doneItems: x.done_items,
+      startedItems: x.started_items,
+      totalAmount: Number(x.total_amount),
+      doneAmount: Number(x.done_amount),
+      kinds: x.kinds ?? [],
+      lastDoneAt: x.last_done_at ?? undefined,
+      nextAppointment: x.next_appointment ?? undefined,
+    }));
+  },
+
   async payments(clinicId: string, r: DateRange): Promise<PaymentRow[]> {
     const { data, error } = await supabase.rpc('report_payments', {
       p_clinic: clinicId,

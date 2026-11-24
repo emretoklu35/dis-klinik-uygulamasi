@@ -30,11 +30,12 @@ import {
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { visitTypeLabels } from '@/features/appointments/clinic';
 import { useAppointment } from '@/features/appointments/hooks';
+import { costRepository } from '@/features/costs/costs';
 import { closeVisit, isVisitClosed, usePatientNotes } from '@/features/notes/notes';
 import { Odontogram } from '@/features/notes/odontogram';
 import { parseTeeth } from '@/features/notes/teeth';
 import { NOTE_TEMPLATES } from '@/features/notes/templates';
-import { usePatient } from '@/features/patients/hooks';
+import { usePatient, useTreatmentPlans } from '@/features/patients/hooks';
 import type { Treatment } from '@/features/patients/types';
 import { fullName, normalizeForSearch, treatmentStatusLabels } from '@/features/patients/utils';
 import { usePatientAccount, usePriceList, type PriceItem } from '@/features/payments/payments';
@@ -80,6 +81,7 @@ export default function CloseVisitScreen() {
   const { can } = useClinicSession();
   const { data: appt, loading: apptLoading } = useAppointment(id);
   const { data: patient } = usePatient(appt?.patientId ?? undefined);
+  const { data: plans } = useTreatmentPlans(appt?.patientId ?? undefined, can('tedavi.oku'));
   const { data: notes, loading: notesLoading } = usePatientNotes(appt?.patientId ?? undefined);
   const { data: prices } = usePriceList(can('odeme.yaz'));
   const { data: account } = usePatientAccount(appt?.patientId ?? undefined);
@@ -90,6 +92,8 @@ export default function CloseVisitScreen() {
   const [extras, setExtras] = useState<Extra[]>([]);
   const [freeText, setFreeText] = useState('');
   const [usage, setUsage] = useState<Usage[]>([]);
+  // Malzeme → tedavi (maliyet için); seçilmezse işaretlenen ilk tedavi
+  const [materialFor, setMaterialFor] = useState<Record<string, string>>({});
   const [stockQuery, setStockQuery] = useState('');
   const [body, setBody] = useState('');
   const [manualTeeth, setManualTeeth] = useState<number[]>([]);
@@ -138,7 +142,24 @@ export default function CloseVisitScreen() {
   }
   if (!appt) return null;
 
-  const open: Treatment[] = (patient.treatments ?? []).filter((t) => t.status !== 'tamamlandi');
+  // Yalnızca uygulanan plandaki açık işlemler (alternatif planlar seansta görünmez)
+  const activePlanId = plans.find((p) => p.isActive)?.id;
+  const open: Treatment[] = (patient.treatments ?? []).filter(
+    (t) => t.status !== 'tamamlandi' && (!activePlanId || t.planId === activePlanId),
+  );
+  /**
+   * İşlemin ücreti: planda ücret varsa o (tamamlanınca zaten borca eklenir, kapatılamaz);
+   * yoksa fiyat listesinde adına uyan kalem.
+   */
+  const priceFor = (t: Treatment) =>
+    t.amount != null
+      ? { id: undefined, name: t.procedure, amount: t.amount, fromPlan: true }
+      : (() => {
+          const m = matchPrice(t.procedure, prices);
+          return m
+            ? { id: m.id as string | undefined, name: m.name, amount: m.amount, fromPlan: false }
+            : undefined;
+        })();
   // Varsayılan: randevudaki işlemle aynı adlı açık tedavi işaretli gelir
   const plannedProc = normalizeForSearch(appt.clinical?.procedure ?? '');
   const selected =
@@ -166,9 +187,12 @@ export default function CloseVisitScreen() {
   const doneList = open.filter((t) => selected.has(t.id));
   const charges = can('odeme.yaz')
     ? doneList
-        .map((t) => ({ t, price: matchPrice(t.procedure, prices) }))
+        .map((t) => ({ t, price: priceFor(t) }))
         .filter(
-          (x) => x.price && !chargeOff.has(x.t.id) && !alreadyCharged(x.price.name, x.t.tooth),
+          (x) =>
+            x.price &&
+            (x.price.fromPlan || !chargeOff.has(x.t.id)) &&
+            !alreadyCharged(x.price.name, x.t.tooth),
         )
     : [];
 
@@ -257,6 +281,22 @@ export default function CloseVisitScreen() {
             }
           : undefined,
       });
+      // Kullanılan malzemeyi tedaviye bağla (tedavi kârlılığında malzeme maliyeti olarak görünür).
+      // Bağlanamazsa seans yine kapanmış sayılır; yalnızca maliyet eksik kalır.
+      if (doneList.length > 0 && usage.length > 0) {
+        await costRepository
+          .linkVisitMaterials(
+            appt.id,
+            usage.map((u) => ({
+              itemId: u.itemId,
+              treatmentId:
+                materialFor[u.itemId] && doneList.some((t) => t.id === materialFor[u.itemId])
+                  ? materialFor[u.itemId]
+                  : doneList[0].id,
+            })),
+          )
+          .catch(() => undefined);
+      }
       setResult({ dueDate: followTitle.trim() ? dueDate : undefined });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Seans kapatılamadı.');
@@ -339,7 +379,7 @@ export default function CloseVisitScreen() {
         ) : (
           open.map((t, i) => {
             const on = selected.has(t.id);
-            const price = matchPrice(t.procedure, prices);
+            const price = priceFor(t);
             const charged = price ? alreadyCharged(price.name, t.tooth) : false;
             return (
               <View key={t.id} style={{ gap: 6 }}>
@@ -367,6 +407,10 @@ export default function CloseVisitScreen() {
                     charged ? (
                       <Text style={styles.chargeNote}>
                         Ücreti daha önce hesaba eklenmiş ({price.name}).
+                      </Text>
+                    ) : price.fromPlan ? (
+                      <Text style={styles.chargeNote}>
+                        Plandaki ücret hesaba eklenecek · {formatTL(price.amount)}
                       </Text>
                     ) : (
                       <View style={styles.chargeRow}>
@@ -511,6 +555,24 @@ export default function CloseVisitScreen() {
                         />
                       ))}
                   </View>
+                ) : null}
+                {doneList.length > 1 ? (
+                  <View style={styles.chips}>
+                    <Text style={styles.muted}>Hangi tedavi için?</Text>
+                    {doneList.map((t) => (
+                      <Chip
+                        key={t.id}
+                        label={`${t.tooth ? `${t.tooth} · ` : ''}${t.procedure}`}
+                        selected={(materialFor[u.itemId] ?? doneList[0].id) === t.id}
+                        onPress={() => setMaterialFor((m) => ({ ...m, [u.itemId]: t.id }))}
+                      />
+                    ))}
+                  </View>
+                ) : doneList.length === 1 ? (
+                  <Text style={styles.muted}>
+                    → {doneList[0].tooth ? `${doneList[0].tooth} · ` : ''}
+                    {doneList[0].procedure} (maliyete eklenir)
+                  </Text>
                 ) : null}
               </View>
             );

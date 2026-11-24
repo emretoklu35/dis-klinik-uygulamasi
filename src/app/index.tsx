@@ -200,7 +200,8 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     icon: 'bar-chart-outline',
     label: 'Raporlar',
     href: '/raporlar',
-    permission: ['rapor.oku', 'rapor.kendi'],
+    // Resepsiyon da taksit takibi için Raporlar'a girer
+    permission: ['rapor.oku', 'rapor.kendi', 'odeme.oku'],
     tint: Colors.warning,
     soft: Colors.warningSoft,
   },

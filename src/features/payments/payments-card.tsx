@@ -6,10 +6,12 @@ import { Button, Card, Chip, Divider, Segmented, TextField } from '@/components/
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { validateTeeth } from '@/features/patients/treatments-card';
 import type { Patient } from '@/features/patients/types';
-import { formatDate, formatDateTime } from '@/features/patients/utils';
+import { formatDate, formatDateTime, fullName } from '@/features/patients/utils';
 import { useClinicSession } from '@/features/session/session-context';
 import { formatDateInput, parseDateInput, todayKey } from '@/lib/dates';
 import { formatTL, kurusToInput, parseTL } from '@/lib/money';
+
+import { InstallmentsSection } from './installments';
 
 import {
   methodLabels,
@@ -488,6 +490,14 @@ export function PaymentsCard({ patient }: { patient: Patient }) {
               onCancel={() => setForm(null)}
             />
           ) : null}
+
+          <InstallmentsSection
+            patientId={patient.id}
+            patientName={fullName(patient)}
+            plans={account.plans}
+            remaining={account.remaining}
+            onChanged={done}
+          />
 
           <Text style={styles.section}>Borç kalemleri</Text>
           {account.charges.length === 0 ? (

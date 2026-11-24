@@ -14,6 +14,9 @@ import type {
   PatientMedical,
   PatientSummary,
   TreatmentInput,
+  PlanApproval,
+  Signature,
+  TreatmentPlan,
 } from './types';
 import { fullName, normalizeForSearch } from './utils';
 
@@ -32,6 +35,37 @@ export interface PatientRepository {
     input: TreatmentInput,
   ): Promise<void>;
   updateTreatment(id: string, input: TreatmentInput): Promise<void>;
+  listPlans(patientId: string): Promise<TreatmentPlan[]>;
+  /** Yeni plan; hastanın uygulanan planı yoksa bu plan uygulanır. Kimliğini döner. */
+  createPlan(
+    clinicId: string,
+    patientId: string,
+    doctorMemberId: string,
+    title: string,
+    activate: boolean,
+  ): Promise<string>;
+  renamePlan(id: string, title: string): Promise<void>;
+  setActivePlan(id: string): Promise<void>;
+  copyPlan(id: string, title: string): Promise<string>;
+  deletePlan(id: string): Promise<void>;
+  /** Hasta onayı: plan kilitlenir (fiyatlar ve işlemler değişmez) */
+  lockPlan(id: string): Promise<void>;
+  /** Yalnızca plan.kilit.ac yetkisi (klinik sahibi) */
+  unlockPlan(id: string): Promise<void>;
+  /**
+   * İndirim: yüzde (0–100) ya da tutar (kuruş). ids boşsa planın tamamlanmamış ücretli tüm
+   * işlemleri. Sınırı veritabanı denetler. 0 indirimi kaldırır.
+   */
+  applyDiscount(
+    planId: string,
+    treatmentIds: string[] | null,
+    mode: 'yuzde' | 'tutar',
+    value: number,
+  ): Promise<void>;
+  /** Planın imzalı onayları, en yenisi önce */
+  listApprovals(planId: string): Promise<PlanApproval[]>;
+  /** Hastanın imzası; plan kilitlenir. Onay kimliğini döner. */
+  signPlan(planId: string, signature: Signature): Promise<string>;
 }
 
 const nn = <T>(v: T | null | undefined) => v ?? undefined;
@@ -121,7 +155,7 @@ class SupabasePatientRepository implements PatientRepository {
         supabase
           .from('treatments')
           .select(
-            'id, performed_on, procedure, kind, tooth, status, note, doctor_member_id, clinic_members(display_name)',
+            'id, performed_on, procedure, kind, tooth, status, note, plan_id, amount, list_amount, price_item_id, doctor_member_id, clinic_members(display_name)',
           )
           .eq('patient_id', id)
           .order('performed_on', { ascending: false }),
@@ -142,6 +176,10 @@ class SupabasePatientRepository implements PatientRepository {
         doctorName: r.clinic_members?.display_name ?? '—',
         status: r.status,
         note: nn(r.note),
+        planId: r.plan_id,
+        amount: nn(r.amount),
+        listAmount: nn(r.list_amount),
+        priceItemId: nn(r.price_item_id),
       }));
     }
 
@@ -253,6 +291,10 @@ class SupabasePatientRepository implements PatientRepository {
           tooth: input.tooth ?? null,
           status: input.status,
           note: input.note ?? null,
+          // Boşsa gönderilmez; veritabanı uygulanan plana bağlar (tetikleyici).
+          plan_id: input.planId as string,
+          amount: input.amount ?? null,
+          price_item_id: input.priceItemId ?? null,
         })
         .select('id')
         .single(),
@@ -271,12 +313,145 @@ class SupabasePatientRepository implements PatientRepository {
           tooth: input.tooth ?? null,
           status: input.status,
           note: input.note ?? null,
+          amount: input.amount ?? null,
+          price_item_id: input.priceItemId ?? null,
         })
         .eq('id', id)
         .select('id')
         .single(),
       'Tedavi güncellenemedi.',
     );
+  }
+
+  async listPlans(patientId: string) {
+    const rows = unwrap(
+      await supabase
+        .from('treatment_plans')
+        .select(
+          'id, title, is_active, created_at, locked_at, locked_by_name, clinic_members(display_name)',
+        )
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: true }),
+      'Tedavi planları yüklenemedi.',
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      isActive: r.is_active,
+      createdAt: r.created_at,
+      doctorName: r.clinic_members?.display_name ?? '—',
+      lockedAt: nn(r.locked_at),
+      lockedByName: nn(r.locked_by_name),
+    }));
+  }
+
+  async createPlan(
+    clinicId: string,
+    patientId: string,
+    doctorMemberId: string,
+    title: string,
+    activate: boolean,
+  ) {
+    const row = unwrap(
+      await supabase
+        .from('treatment_plans')
+        .insert({
+          clinic_id: clinicId,
+          patient_id: patientId,
+          doctor_member_id: doctorMemberId,
+          title: title.trim(),
+          is_active: activate,
+        })
+        .select('id')
+        .single(),
+      'Tedavi planı oluşturulamadı.',
+    );
+    return row.id;
+  }
+
+  async renamePlan(id: string, title: string) {
+    unwrap(
+      await supabase
+        .from('treatment_plans')
+        .update({ title: title.trim() })
+        .eq('id', id)
+        .select('id')
+        .single(),
+      'Plan adı değiştirilemedi.',
+    );
+  }
+
+  async setActivePlan(id: string) {
+    const { error } = await supabase.rpc('set_active_treatment_plan', { p_plan: id });
+    if (error) throw new Error(error.message || 'Plan uygulanamadı.');
+  }
+
+  async copyPlan(id: string, title: string) {
+    const { data, error } = await supabase.rpc('copy_treatment_plan', {
+      p_plan: id,
+      p_title: title.trim(),
+    });
+    if (error || !data) throw new Error(error?.message || 'Plan kopyalanamadı.');
+    return data;
+  }
+
+  async deletePlan(id: string) {
+    const { error } = await supabase.rpc('delete_treatment_plan', { p_plan: id });
+    if (error) throw new Error(error.message || 'Plan silinemedi.');
+  }
+
+  async lockPlan(id: string) {
+    const { error } = await supabase.rpc('lock_treatment_plan', { p_plan: id });
+    if (error) throw new Error(error.message || 'Plan kilitlenemedi.');
+  }
+
+  async applyDiscount(
+    planId: string,
+    treatmentIds: string[] | null,
+    mode: 'yuzde' | 'tutar',
+    value: number,
+  ) {
+    const { error } = await supabase.rpc('apply_plan_discount', {
+      p_plan: planId,
+      p_treatments: treatmentIds as string[],
+      p_mode: mode,
+      p_value: value,
+    });
+    if (error) throw new Error(error.message || 'İndirim uygulanamadı.');
+  }
+
+  async listApprovals(planId: string) {
+    const rows = unwrap(
+      await supabase
+        .from('treatment_plan_approvals')
+        .select('id, plan_id, signature, items, total, signed_at, recorded_by_name')
+        .eq('plan_id', planId)
+        .order('signed_at', { ascending: false }),
+      'Plan onayları yüklenemedi.',
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      planId: r.plan_id,
+      signature: r.signature as Signature,
+      items: r.items as PlanApproval['items'],
+      total: r.total,
+      signedAt: r.signed_at,
+      recordedByName: nn(r.recorded_by_name),
+    }));
+  }
+
+  async signPlan(planId: string, signature: Signature) {
+    const { data, error } = await supabase.rpc('sign_treatment_plan', {
+      p_plan: planId,
+      p_signature: signature,
+    });
+    if (error || !data) throw new Error(error?.message || 'İmza kaydedilemedi.');
+    return data;
+  }
+
+  async unlockPlan(id: string) {
+    const { error } = await supabase.rpc('unlock_treatment_plan', { p_plan: id });
+    if (error) throw new Error(error.message || 'Plan kilidi açılamadı.');
   }
 }
 

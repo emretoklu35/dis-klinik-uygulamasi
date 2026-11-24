@@ -20,6 +20,10 @@ export default function ReportsLayout() {
       <Stack.Screen name="gun-sonu" options={{ title: 'Gün sonu Raporu' }} />
       <Stack.Screen name="tedavi" options={{ title: 'Tamamlanan Tedavi Raporu' }} />
       <Stack.Screen name="prim" options={{ title: 'Doktor Prim Raporu' }} />
+      <Stack.Screen name="taksitler" options={{ title: 'Taksit Takibi' }} />
+      <Stack.Screen name="yarim-kalan" options={{ title: 'Yarım Kalan Tedaviler' }} />
+      <Stack.Screen name="laboratuvar" options={{ title: 'Laboratuvar Faturaları' }} />
+      <Stack.Screen name="giderler" options={{ title: 'Giderler' }} />
     </Stack>
   );
 }

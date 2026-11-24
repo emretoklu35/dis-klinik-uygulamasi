@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useFocusLoad } from '@/lib/use-focus-load';
 
 import { patientRepository } from './repository';
-import type { Patient, PatientSummary, Treatment } from './types';
+import type { Patient, PatientSummary, PlanApproval, Treatment, TreatmentPlan } from './types';
 
 /** Hasta listesi; ekran her odaklandığında yenilenir. */
 export function usePatientList(query: string) {
@@ -44,7 +44,32 @@ export function useTreatmentSummaries(patientId: string | undefined) {
       doctorMemberId: '',
       doctorName: r.doctor_name,
       status: r.status,
+      planId: r.plan_id,
+      amount: r.amount ?? undefined,
+      listAmount: r.list_amount ?? undefined,
     }));
   }, [enabled, patientId]);
   return useFocusLoad<Treatment[] | null>(load, null, 'Tedaviler yüklenemedi.');
+}
+
+/** Hastanın tedavi planları (tedavileri ya da özetini görebilenler için). */
+export function useTreatmentPlans(patientId: string | undefined, enabled: boolean) {
+  const load = useCallback(
+    () =>
+      enabled && patientId
+        ? patientRepository.listPlans(patientId)
+        : Promise.resolve([] as TreatmentPlan[]),
+    [patientId, enabled],
+  );
+  return useFocusLoad<TreatmentPlan[]>(load, [], 'Tedavi planları yüklenemedi.');
+}
+
+/** Planın imzalı onayları (proforma) */
+export function usePlanApprovals(planId: string | undefined) {
+  const load = useCallback(
+    () =>
+      planId ? patientRepository.listApprovals(planId) : Promise.resolve([] as PlanApproval[]),
+    [planId],
+  );
+  return useFocusLoad<PlanApproval[]>(load, [], 'Plan onayları yüklenemedi.');
 }

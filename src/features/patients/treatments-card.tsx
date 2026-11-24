@@ -1,26 +1,23 @@
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Badge, Button, Card, Chip, Divider, Segmented, TextField } from '@/components/ui';
+import { BottomSheet, SheetOption } from '@/components/bottom-sheet';
+import { Button, Chip, Segmented, TextField } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { needsCompletionRadiograph, type Radiograph } from '@/features/radiographs/radiographs';
+import { usePriceList, type PriceItem } from '@/features/payments/payments';
+import { needsCompletionRadiograph } from '@/features/radiographs/radiographs';
 import { useClinicSession } from '@/features/session/session-context';
 import { formatDateInput, parseDateInput, todayKey } from '@/lib/dates';
+import { formatTL, kurusToInput, parseTL } from '@/lib/money';
 
 import { patientRepository } from './repository';
-import type { Patient, Treatment, TreatmentInput, TreatmentKind, TreatmentStatus } from './types';
+import type { Treatment, TreatmentInput, TreatmentKind, TreatmentStatus } from './types';
 import {
-  formatDate,
   guessTreatmentKind,
+  normalizeForSearch,
   treatmentKindLabels,
   treatmentStatusLabels,
 } from './utils';
-
-const statusTone: Record<TreatmentStatus, 'primary' | 'warning' | 'success'> = {
-  planlandi: 'primary',
-  devam: 'warning',
-  tamamlandi: 'success',
-};
 
 /** FDI diş numarası: kalıcı 11–48, süt dişi 51–85. Birden fazla diş virgülle. */
 const FDI = /^([1-4][1-8]|[5-8][1-5])$/;
@@ -39,23 +36,32 @@ export function validateTeeth(text: string) {
   return { value: parts.join(', '), error: null };
 }
 
-type Editor = { mode: 'new' } | { mode: 'edit'; treatment: Treatment };
+export type TreatmentEditor = { mode: 'new' } | { mode: 'edit'; treatment: Treatment };
 
-function TreatmentForm({
+/** Tedavi planındaki bir işlemi ekler ya da düzenler. */
+export function TreatmentForm({
   editor,
   patientId,
+  planId,
+  locked = false,
   hasCompletionRadiograph,
   onDone,
   onCancel,
 }: {
-  editor: Editor;
+  editor: TreatmentEditor;
   patientId: string;
+  /** Yeni işlemin ekleneceği plan */
+  planId?: string;
+  /** Plan kilitliyse yalnızca durum, tarih ve not değişir (anlaşılan bilgiler sabit) */
+  locked?: boolean;
   /** Bu tedaviye bağlı geçerli bir bitim röntgeni var mı? */
   hasCompletionRadiograph: boolean;
   onDone: () => void;
   onCancel: () => void;
 }) {
-  const { clinic, member } = useClinicSession();
+  const { clinic, member, can } = useClinicSession();
+  const canPrice = can('odeme.oku');
+  const { data: prices } = usePriceList(canPrice);
   const t = editor.mode === 'edit' ? editor.treatment : null;
   const [dateText, setDateText] = useState(formatDateInput(t?.date ?? todayKey()));
   const [procedure, setProcedureText] = useState(t?.procedure ?? '');
@@ -77,11 +83,27 @@ function TreatmentForm({
     }
   };
   const [tooth, setTooth] = useState(t?.tooth ?? '');
-  const [status, setStatus] = useState<TreatmentStatus>(t?.status ?? 'tamamlandi');
+  // Plana eklenen işlem varsayılan olarak "planlandı"dır.
+  const [status, setStatus] = useState<TreatmentStatus>(t?.status ?? 'planlandi');
+  const [amountText, setAmountText] = useState(t?.amount != null ? kurusToInput(t.amount) : '');
+  const [priceItemId, setPriceItemId] = useState(t?.priceItemId);
+  const [pickPrice, setPickPrice] = useState(false);
+  const [priceQuery, setPriceQuery] = useState('');
+  const choosePrice = (item: PriceItem) => {
+    setPriceItemId(item.id);
+    setAmountText(kurusToInput(item.amount));
+    if (!procedure.trim() || labels.includes(procedure.trim())) setProcedureText(item.name);
+    if (!kind) {
+      const guess = guessTreatmentKind(item.name);
+      if (guess) setKindValue(guess);
+    }
+    setPickPrice(false);
+    setPriceQuery('');
+  };
   const [note, setNote] = useState(t?.note ?? '');
-  const [errors, setErrors] = useState<Partial<Record<'date' | 'kind' | 'tooth' | 'form', string>>>(
-    {},
-  );
+  const [errors, setErrors] = useState<
+    Partial<Record<'date' | 'kind' | 'tooth' | 'amount' | 'form', string>>
+  >({});
   const [saving, setSaving] = useState(false);
   // Bitim röntgeni uyarısı: engellemez, bir kez onay ister.
   const [radiographWarning, setRadiographWarning] = useState(false);
@@ -95,8 +117,10 @@ function TreatmentForm({
     if (!kind) e.kind = 'Yapılan ya da planlanan işlemi seçin.';
     const teeth = validateTeeth(tooth);
     if (teeth.error) e.tooth = teeth.error;
+    const amount = amountText.trim() ? parseTL(amountText) : undefined;
+    if (amount === null) e.amount = 'Geçerli bir tutar girin (ör. 2.500 ya da 2.500,50).';
     setErrors(e);
-    if (Object.keys(e).length > 0 || !date || !kind) return;
+    if (Object.keys(e).length > 0 || !date || !kind || amount === null) return;
     // Açıklama boşsa türün adı kaydedilir.
     const name = procedure.trim() || treatmentKindLabels[kind];
     if (
@@ -109,6 +133,17 @@ function TreatmentForm({
       return;
     }
 
+    // Kilitli planda anlaşılan bilgiler olduğu gibi gönderilir (veritabanı da denetler)
+    const fixed =
+      locked && t
+        ? {
+            procedure: t.procedure,
+            kind: t.kind,
+            tooth: t.tooth,
+            amount: t.amount,
+            priceItemId: t.priceItemId,
+          }
+        : null;
     const input: TreatmentInput = {
       date,
       procedure: name,
@@ -116,6 +151,11 @@ function TreatmentForm({
       tooth: teeth.value,
       status,
       note: note.trim() || undefined,
+      planId: t ? undefined : planId,
+      amount,
+      // Elle değiştirilen tutar yine de fiyat kalemine bağlı kalır (borçta fark notu düşülür)
+      priceItemId: amount != null ? priceItemId : undefined,
+      ...fixed,
     };
     setSaving(true);
     try {
@@ -132,7 +172,7 @@ function TreatmentForm({
   return (
     <View style={styles.form}>
       <Text style={styles.formTitle}>
-        {t ? 'Tedaviyi düzenle' : 'Yeni tedavi kaydı'} · {t ? t.doctorName : member.name}
+        {t ? 'İşlemi düzenle' : 'Plana işlem ekle'} · {t ? t.doctorName : member.name}
       </Text>
       <Segmented
         label="Durum"
@@ -143,29 +183,45 @@ function TreatmentForm({
         }))}
         onChange={setStatus}
       />
-      <View style={{ gap: Spacing.sm }}>
-        <Text style={styles.kindLabel}>
-          Yapılan işlem <Text style={{ color: Colors.danger }}>*</Text>
-        </Text>
-        <View style={styles.chips}>
-          {(Object.keys(treatmentKindLabels) as TreatmentKind[]).map((k) => (
-            <Chip
-              key={k}
-              label={treatmentKindLabels[k]}
-              selected={kind === k}
-              onPress={() => setKind(k)}
-            />
-          ))}
+      {locked && t ? (
+        <View style={styles.lockedBox}>
+          <Text style={styles.lockedTitle}>
+            {t.tooth ? `${t.tooth} · ` : ''}
+            {t.procedure}
+            {t.amount != null && canPrice ? ` · ${formatTL(t.amount)}` : ''}
+          </Text>
+          <Text style={styles.lockedText}>
+            Plan kilitli: işlem, diş ve ücret değiştirilemez. Durumu, tarihi ve notu
+            güncelleyebilirsiniz.
+          </Text>
         </View>
-        {errors.kind ? <Text style={styles.error}>{errors.kind}</Text> : null}
-      </View>
-      <TextField
-        label="Açıklama"
-        value={procedure}
-        onChangeText={setProcedure}
-        placeholder="Ör. İmplant 4.0×10 mm, Panoramik röntgen"
-        hint="Seçtiğiniz işlemin adıyla dolar; gerekirse ayrıntı ekleyin."
-      />
+      ) : (
+        <>
+          <View style={{ gap: Spacing.sm }}>
+            <Text style={styles.kindLabel}>
+              Yapılan işlem <Text style={{ color: Colors.danger }}>*</Text>
+            </Text>
+            <View style={styles.chips}>
+              {(Object.keys(treatmentKindLabels) as TreatmentKind[]).map((k) => (
+                <Chip
+                  key={k}
+                  label={treatmentKindLabels[k]}
+                  selected={kind === k}
+                  onPress={() => setKind(k)}
+                />
+              ))}
+            </View>
+            {errors.kind ? <Text style={styles.error}>{errors.kind}</Text> : null}
+          </View>
+          <TextField
+            label="Açıklama"
+            value={procedure}
+            onChangeText={setProcedure}
+            placeholder="Ör. İmplant 4.0×10 mm, Panoramik röntgen"
+            hint="Seçtiğiniz işlemin adıyla dolar; gerekirse ayrıntı ekleyin."
+          />
+        </>
+      )}
       <View style={styles.row}>
         <View style={styles.col}>
           <TextField
@@ -178,18 +234,45 @@ function TreatmentForm({
             maxLength={10}
           />
         </View>
-        <View style={styles.col}>
-          <TextField
-            label="Diş (FDI)"
-            value={tooth}
-            onChangeText={setTooth}
-            error={errors.tooth}
-            placeholder="Ör. 36 veya 11, 21"
-            hint="Genel işlemlerde boş bırakın."
-            keyboardType="numbers-and-punctuation"
-          />
-        </View>
+        {locked ? null : (
+          <View style={styles.col}>
+            <TextField
+              label="Diş (FDI)"
+              value={tooth}
+              onChangeText={setTooth}
+              error={errors.tooth}
+              placeholder="Ör. 36 veya 11, 21"
+              hint="Genel işlemlerde boş bırakın."
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+        )}
       </View>
+      {canPrice && !locked ? (
+        <View style={{ gap: Spacing.sm }}>
+          <TextField
+            label="Ücret (₺)"
+            value={amountText}
+            onChangeText={(v) => {
+              setAmountText(v);
+              if (!v.trim()) setPriceItemId(undefined);
+            }}
+            error={errors.amount}
+            placeholder="Ör. 2.500"
+            keyboardType="decimal-pad"
+            hint="İşlem tamamlanınca bu tutar hastanın borcuna eklenir."
+          />
+          {prices.some((p) => p.active) ? (
+            <Pressable
+              onPress={() => setPickPrice(true)}
+              accessibilityRole="button"
+              hitSlop={6}
+              style={{ alignSelf: 'flex-start' }}>
+              <Text style={styles.link}>Fiyat listesinden seç</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
       <TextField
         label="Not"
         value={note}
@@ -215,6 +298,35 @@ function TreatmentForm({
         </View>
       ) : null}
       {errors.form ? <Text style={styles.error}>{errors.form}</Text> : null}
+      {pickPrice ? (
+        <BottomSheet
+          title="Fiyat listesi"
+          onClose={() => setPickPrice(false)}
+          header={
+            <TextField
+              label="Ara"
+              value={priceQuery}
+              onChangeText={setPriceQuery}
+              placeholder="Ör. implant"
+            />
+          }>
+          {prices
+            .filter(
+              (p) =>
+                p.active &&
+                normalizeForSearch(p.name).includes(normalizeForSearch(priceQuery.trim())),
+            )
+            .map((p) => (
+              <SheetOption
+                key={p.id}
+                label={p.name}
+                sublabel={formatTL(p.amount)}
+                selected={p.id === priceItemId}
+                onPress={() => choosePrice(p)}
+              />
+            ))}
+        </BottomSheet>
+      ) : null}
       <View style={styles.actions}>
         <Button label="Vazgeç" variant="secondary" onPress={onCancel} disabled={saving} />
         <Button
@@ -225,97 +337,6 @@ function TreatmentForm({
         />
       </View>
     </View>
-  );
-}
-
-/** Tedavi geçmişi: yalnızca hekim yetkisiyle gösterilir (patient.treatments null değilse). */
-export function TreatmentsCard({
-  patient,
-  radiographs = [],
-  onSaved,
-}: {
-  patient: Patient;
-  /** Hekimse bu hastanın röntgenleri (öncesi/bitim durumunu göstermek için). */
-  radiographs?: Radiograph[];
-  onSaved: () => void;
-}) {
-  const { can } = useClinicSession();
-  const canWrite = can('tedavi.yaz');
-  const [editor, setEditor] = useState<Editor | null>(null);
-  const treatments = patient.treatments;
-  if (!treatments) return null;
-
-  const radiographFor = (treatmentId: string, purpose: Radiograph['purpose']) =>
-    radiographs.some((r) => !r.invalid && r.treatmentId === treatmentId && r.purpose === purpose);
-
-  return (
-    <Card
-      title="Tedavi geçmişi"
-      action={
-        canWrite && !editor ? (
-          <Button
-            label="Tedavi ekle"
-            icon="add"
-            variant="secondary"
-            onPress={() => setEditor({ mode: 'new' })}
-          />
-        ) : null
-      }>
-      {editor ? (
-        <TreatmentForm
-          // Başka bir kaydı düzenlemeye geçince form sıfırlansın
-          key={editor.mode === 'edit' ? editor.treatment.id : 'yeni'}
-          editor={editor}
-          patientId={patient.id}
-          hasCompletionRadiograph={
-            editor.mode === 'edit' && radiographFor(editor.treatment.id, 'tedavi_sonrasi')
-          }
-          onCancel={() => setEditor(null)}
-          onDone={() => {
-            setEditor(null);
-            onSaved();
-          }}
-        />
-      ) : null}
-
-      {treatments.length === 0 ? (
-        <Text style={styles.empty}>Henüz tedavi kaydı yok.</Text>
-      ) : (
-        treatments.map((t, i) => (
-          <Fragment key={t.id}>
-            {i > 0 && <Divider />}
-            <Pressable
-              onPress={canWrite ? () => setEditor({ mode: 'edit', treatment: t }) : undefined}
-              disabled={!canWrite}
-              accessibilityRole={canWrite ? 'button' : undefined}
-              accessibilityHint={canWrite ? 'Tedaviyi düzenle' : undefined}
-              style={({ pressed }) => [styles.treatment, pressed && { opacity: 0.6 }]}>
-              <View style={styles.treatmentDate}>
-                <Text style={styles.sub}>{formatDate(t.date)}</Text>
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.treatmentTitle}>
-                  {t.procedure}
-                  {t.tooth ? <Text style={styles.tooth}> · Diş {t.tooth}</Text> : null}
-                </Text>
-                <Text style={styles.sub}>
-                  {treatmentKindLabels[t.kind]} · {t.doctorName}
-                  {t.note ? ` · ${t.note}` : ''}
-                </Text>
-                {needsCompletionRadiograph(t.procedure) ||
-                radiographs.some((r) => r.treatmentId === t.id) ? (
-                  <Text style={styles.xray}>
-                    Röntgen: öncesi {radiographFor(t.id, 'tedavi_oncesi') ? '✓' : '—'} · bitim{' '}
-                    {radiographFor(t.id, 'tedavi_sonrasi') ? '✓' : '—'}
-                  </Text>
-                ) : null}
-              </View>
-              <Badge label={treatmentStatusLabels[t.status]} tone={statusTone[t.status]} />
-            </Pressable>
-          </Fragment>
-        ))
-      )}
-    </Card>
   );
 }
 
@@ -342,11 +363,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warningSoft,
   },
   warnText: { fontSize: 13, color: Colors.warning },
-  xray: { fontSize: 12, color: Colors.textMuted },
-  empty: { fontSize: 14, color: Colors.textMuted },
-  treatment: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  treatmentDate: { width: 92 },
-  treatmentTitle: { fontSize: 15, fontWeight: '600', color: Colors.text },
-  tooth: { fontSize: 13, fontWeight: '500', color: Colors.primary },
-  sub: { fontSize: 13, color: Colors.textSecondary },
+  link: { fontSize: 14, fontWeight: '600', color: Colors.primary },
+  lockedBox: {
+    gap: 4,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+  },
+  lockedTitle: { fontSize: 14, fontWeight: '600', color: Colors.text },
+  lockedText: { fontSize: 12, color: Colors.primaryDeep },
 });

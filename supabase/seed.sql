@@ -10,6 +10,7 @@
 --   resepsiyon@demo.test    → resepsiyonist
 --   asistan@demo.test       → asistan (medya yükler; görüntüleri/sağlık ayrıntısını görmez)
 --   ekran@demo.test         → Mesai Ekranı (resepsiyon tableti; yalnızca QR kod gösterir)
+--   muhasebe@demo.test      → muhasebe (laboratuvar faturaları, giderler, kârlılık, raporlar)
 -- =============================================================================
 
 do $$
@@ -21,7 +22,8 @@ declare
     {"id":"a0000000-0000-4000-8000-000000000003","email":"yonetici@demo.test"},
     {"id":"a0000000-0000-4000-8000-000000000004","email":"resepsiyon@demo.test"},
     {"id":"a0000000-0000-4000-8000-000000000005","email":"asistan@demo.test"},
-    {"id":"a0000000-0000-4000-8000-000000000006","email":"ekran@demo.test"}
+    {"id":"a0000000-0000-4000-8000-000000000006","email":"ekran@demo.test"},
+    {"id":"a0000000-0000-4000-8000-000000000007","email":"muhasebe@demo.test"}
   ]';
   u jsonb;
 begin
@@ -61,7 +63,8 @@ insert into public.clinic_members (id, clinic_id, user_id, display_name) values
   ('b0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000003', 'Demo Yönetici'),
   ('b0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000004', 'Demo Resepsiyon'),
   ('b0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000005', 'Demo Asistan'),
-  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000006', 'Resepsiyon tableti');
+  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000006', 'Resepsiyon tableti'),
+  ('b0000000-0000-4000-8000-000000000007', 'c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000007', 'Demo Muhasebe');
 
 insert into public.member_roles (member_id, clinic_id, role, granted_by) values
   ('b0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 'sahip',         null),
@@ -70,7 +73,8 @@ insert into public.member_roles (member_id, clinic_id, role, granted_by) values
   ('b0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'yonetici',      null),
   ('b0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'resepsiyonist', null),
   ('b0000000-0000-4000-8000-000000000005', 'c0000000-0000-4000-8000-000000000001', 'asistan',       null),
-  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'ekran',         null);
+  ('b0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000001', 'ekran',         null),
+  ('b0000000-0000-4000-8000-000000000007', 'c0000000-0000-4000-8000-000000000001', 'muhasebe',      null);
 
 -- Hastalar (uygulamadaki demo hastalarla aynı)
 insert into public.patients (id, clinic_id, first_name, last_name, phone, email, birth_date, gender, admin_note, created_at) values

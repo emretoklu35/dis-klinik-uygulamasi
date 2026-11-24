@@ -74,3 +74,34 @@ export function toothStates(treatments: Treatment[] | null, noteTeeth: number[][
   for (const teeth of noteTeeth) for (const n of teeth) get(n).hasNotes = true;
   return map;
 }
+
+const SIDES: Record<number, string> = {
+  1: 'Sağ üst',
+  2: 'Sol üst',
+  3: 'Sol alt',
+  4: 'Sağ alt',
+  5: 'Sağ üst süt',
+  6: 'Sol üst süt',
+  7: 'Sol alt süt',
+  8: 'Sağ alt süt',
+};
+const PERMANENT = [
+  '',
+  'orta kesici',
+  'yan kesici',
+  'köpek dişi',
+  'birinci küçük azı',
+  'ikinci küçük azı',
+  'birinci büyük azı',
+  'ikinci büyük azı',
+  'yirmi yaş dişi',
+];
+const PRIMARY = ['', 'orta kesici', 'yan kesici', 'köpek dişi', 'birinci azı', 'ikinci azı'];
+
+/** 36 → "Sol alt birinci büyük azı" (hastaya anlatırken ve dişe dokununca gösterilir) */
+export function toothName(n: number) {
+  if (!isValidTooth(n)) return '';
+  const q = Math.floor(n / 10);
+  const d = n % 10;
+  return `${SIDES[q]} ${(q <= 4 ? PERMANENT : PRIMARY)[d]}`;
+}

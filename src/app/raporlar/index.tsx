@@ -7,7 +7,7 @@ import { BottomSheet } from '@/components/bottom-sheet';
 import { Screen } from '@/components/ui';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { basisInfo, type CommissionBasis } from '@/features/reports/reports';
-import { useClinicSession } from '@/features/session/session-context';
+import { useClinicSession, type Permission } from '@/features/session/session-context';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 type Group = 'finansal' | 'tedavi';
@@ -21,6 +21,10 @@ type Report = {
   href?: Href;
   /** Hekim (yalnızca kendi verisi) de görebilir */
   forDoctor: boolean;
+  /** Ödemeleri görebilen herkes (resepsiyon dahil) görür */
+  forPayments?: boolean;
+  /** Yalnızca bu yetkiyle görünür (ör. maliyet ekranları) */
+  perm?: Permission;
 };
 
 const REPORTS: Report[] = [
@@ -39,6 +43,45 @@ const REPORTS: Report[] = [
     title: 'Doktor Prim Raporu',
     sub: 'Doktor kazançları ve komisyonları',
     icon: 'wallet-outline',
+    forDoctor: true,
+  },
+  {
+    key: 'giderler',
+    group: 'finansal',
+    title: 'Giderler',
+    sub: 'Laboratuvar faturaları ve stok alımları',
+    icon: 'receipt-outline',
+    href: '/raporlar/giderler',
+    forDoctor: false,
+    perm: 'maliyet.oku',
+  },
+  {
+    key: 'laboratuvar',
+    group: 'finansal',
+    title: 'Laboratuvar Faturaları',
+    sub: 'Ay sonu faturasını işlere ve hekimlere dağıtın',
+    icon: 'flask-outline',
+    href: '/raporlar/laboratuvar',
+    forDoctor: false,
+    perm: 'maliyet.yaz',
+  },
+  {
+    key: 'taksit',
+    group: 'finansal',
+    title: 'Taksit Takibi',
+    sub: 'Geciken ve vadesi yaklaşan taksitler',
+    icon: 'calendar-outline',
+    href: '/raporlar/taksitler',
+    forDoctor: false,
+    forPayments: true,
+  },
+  {
+    key: 'yarim',
+    group: 'tedavi',
+    title: 'Yarım Kalan Tedaviler',
+    sub: 'Bitmemiş planlar, kalan tutar ve randevusu olmayanlar',
+    icon: 'hourglass-outline',
+    href: '/raporlar/yarim-kalan',
     forDoctor: true,
   },
   {
@@ -73,16 +116,19 @@ export default function ReportsScreen() {
   const { can } = useClinicSession();
   const all = can('rapor.oku');
   const own = can('rapor.kendi');
+  const pay = can('odeme.oku');
   const [filter, setFilter] = useState<Group | 'tumu'>('tumu');
   const [pickBasis, setPickBasis] = useState(false);
 
-  const visible = REPORTS.filter((r) => all || (own && r.forDoctor));
+  const visible = REPORTS.filter((r) =>
+    r.perm ? can(r.perm) : r.forPayments ? pay : all || (own && r.forDoctor),
+  );
   const count = (g: Group) => visible.filter((r) => r.group === g).length;
   const groups = (['finansal', 'tedavi'] as Group[]).filter(
     (g) => count(g) > 0 && (filter === 'tumu' || filter === g),
   );
 
-  if (!all && !own) {
+  if (visible.length === 0) {
     return (
       <Screen inStack>
         <Text style={styles.empty}>Raporları görme yetkiniz yok.</Text>

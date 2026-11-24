@@ -27,6 +27,39 @@ export type Treatment = {
   doctorName: string;
   status: TreatmentStatus;
   note?: string;
+  /** Ait olduğu tedavi planı */
+  planId: string;
+  /** Plandaki ücret (kuruş); tamamlanınca hastanın borcuna eklenir */
+  amount?: number;
+  /** İndirimden önceki liste fiyatı (amount'tan büyükse indirim var) */
+  listAmount?: number;
+  priceItemId?: string;
+};
+
+/** Hastanın tedavi planı. Aynı anda yalnızca biri uygulanır. */
+export type TreatmentPlan = {
+  id: string;
+  title: string;
+  doctorName: string;
+  isActive: boolean;
+  createdAt: string;
+  /** Kilitliyse: hasta onayladı, fiyatlar ve işlemler değişmez */
+  lockedAt?: string;
+  lockedByName?: string;
+};
+
+/** Elle atılan imza: SVG yol verisi ve çizildiği alanın boyutu */
+export type Signature = { w: number; h: number; d: string };
+
+/** Hastanın proformayı imzaladığı an ve o anda onayladığı içerik */
+export type PlanApproval = {
+  id: string;
+  planId: string;
+  signature: Signature;
+  items: { procedure: string; tooth?: string | null; status: string; amount?: number | null }[];
+  total: number;
+  signedAt: string;
+  recordedByName?: string;
 };
 
 /** Tedavi ekleme/düzenleme girdisi (yalnızca hekim). */
@@ -37,6 +70,10 @@ export type TreatmentInput = {
   tooth?: string;
   status: TreatmentStatus;
   note?: string;
+  /** Boşsa uygulanan plana girer */
+  planId?: string;
+  amount?: number;
+  priceItemId?: string;
 };
 
 export type PatientMedical = {

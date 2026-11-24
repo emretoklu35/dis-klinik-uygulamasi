@@ -197,14 +197,14 @@ isOneToOne: false
                   ]
                 },"clinics": {
                   Row: {
-                    "close_time": string,"created_at": string,"id": string,"name": string,"open_time": string,"slot_minutes": number,"timezone": string,"working_days": (number)[]
+                    "address": string | null,"close_time": string,"created_at": string,"discount_limit_pct": number,"email": string | null,"id": string,"name": string,"open_time": string,"phone": string | null,"slot_minutes": number,"timezone": string,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "close_time"?: string,"created_at"?: string,"id"?: string,"name": string,"open_time"?: string,"slot_minutes"?: number,"timezone"?: string,"working_days"?: (number)[]
+                    "address"?: string | null,"close_time"?: string,"created_at"?: string,"discount_limit_pct"?: number,"email"?: string | null,"id"?: string,"name": string,"open_time"?: string,"phone"?: string | null,"slot_minutes"?: number,"timezone"?: string,"working_days"?: (number)[]
                   }
                   Update: {
-                    "close_time"?: string,"created_at"?: string,"id"?: string,"name"?: string,"open_time"?: string,"slot_minutes"?: number,"timezone"?: string,"working_days"?: (number)[]
+                    "address"?: string | null,"close_time"?: string,"created_at"?: string,"discount_limit_pct"?: number,"email"?: string | null,"id"?: string,"name"?: string,"open_time"?: string,"phone"?: string | null,"slot_minutes"?: number,"timezone"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
                     
@@ -247,6 +247,46 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "clinic_members"
       referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"lab_statements": {
+                  Row: {
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"clinic_id": string,"created_at": string,"created_by": string | null,"created_by_name": string | null,"currency": string,"id": string,"invoice_date": string,"invoice_no": string | null,"lab_id": string,"note": string | null,"period_end": string,"period_start": string,"rate": number,"total_original": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id": string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"currency"?: string,"id"?: string,"invoice_date"?: string,"invoice_no"?: string | null,"lab_id": string,"note"?: string | null,"period_end": string,"period_start": string,"rate"?: number,"total_original": number
+                  }
+                  Update: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"currency"?: string,"id"?: string,"invoice_date"?: string,"invoice_no"?: string | null,"lab_id"?: string,"note"?: string | null,"period_end"?: string,"period_start"?: string,"rate"?: number,"total_original"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_statements_clinic_id_lab_id_fkey"
+      columns: ["clinic_id","lab_id"]
+isOneToOne: false
+      referencedRelation: "labs"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"labs": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"created_at": string,"id": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"created_at"?: string,"id"?: string,"name": string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"created_at"?: string,"id"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "labs_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
     }
                   ]
                 },"media_requests": {
@@ -507,6 +547,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"payment_installments": {
+                  Row: {
+                    "amount": number,"clinic_id": string,"due_date": string,"id": string,"plan_id": string,"seq": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"clinic_id": string,"due_date": string,"id"?: string,"plan_id": string,"seq": number
+                  }
+                  Update: {
+                    "amount"?: number,"clinic_id"?: string,"due_date"?: string,"id"?: string,"plan_id"?: string,"seq"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payment_installments_clinic_id_plan_id_fkey"
+      columns: ["clinic_id","plan_id"]
+isOneToOne: false
+      referencedRelation: "payment_plans"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"payment_plans": {
+                  Row: {
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"clinic_id": string,"created_at": string,"created_by": string | null,"created_by_name": string | null,"id": string,"note": string | null,"patient_id": string,"title": string,"total": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id": string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"id"?: string,"note"?: string | null,"patient_id": string,"title"?: string,"total": number
+                  }
+                  Update: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"id"?: string,"note"?: string | null,"patient_id"?: string,"title"?: string,"total"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payment_plans_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "payment_plans_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
                 },"price_changes": {
                   Row: {
                     "changed_at": string,"changed_by": string | null,"clinic_id": string,"id": number,"item_id": string,"new_amount": number,"note": string | null,"old_amount": number
@@ -641,14 +727,14 @@ isOneToOne: false
                   ]
                 },"stock_movements": {
                   Row: {
-                    "appointment_id": string | null,"clinic_id": string,"counted_quantity": number | null,"created_at": string,"created_by": string | null,"expiry_date": string | null,"id": string,"item_id": string,"kind": Database["public"]['Enums']["stock_movement_kind"],"lot_no": string | null,"note": string | null,"patient_id": string | null,"quantity": number
+                    "appointment_id": string | null,"clinic_id": string,"counted_quantity": number | null,"created_at": string,"created_by": string | null,"expiry_date": string | null,"id": string,"item_id": string,"kind": Database["public"]['Enums']["stock_movement_kind"],"lot_no": string | null,"note": string | null,"patient_id": string | null,"quantity": number,"treatment_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "appointment_id"?: string | null,"clinic_id": string,"counted_quantity"?: number | null,"created_at"?: string,"created_by"?: string | null,"expiry_date"?: string | null,"id"?: string,"item_id": string,"kind": Database["public"]['Enums']["stock_movement_kind"],"lot_no"?: string | null,"note"?: string | null,"patient_id"?: string | null,"quantity": number
+                    "appointment_id"?: string | null,"clinic_id": string,"counted_quantity"?: number | null,"created_at"?: string,"created_by"?: string | null,"expiry_date"?: string | null,"id"?: string,"item_id": string,"kind": Database["public"]['Enums']["stock_movement_kind"],"lot_no"?: string | null,"note"?: string | null,"patient_id"?: string | null,"quantity": number,"treatment_id"?: string | null
                   }
                   Update: {
-                    "appointment_id"?: string | null,"clinic_id"?: string,"counted_quantity"?: number | null,"created_at"?: string,"created_by"?: string | null,"expiry_date"?: string | null,"id"?: string,"item_id"?: string,"kind"?: Database["public"]['Enums']["stock_movement_kind"],"lot_no"?: string | null,"note"?: string | null,"patient_id"?: string | null,"quantity"?: number
+                    "appointment_id"?: string | null,"clinic_id"?: string,"counted_quantity"?: number | null,"created_at"?: string,"created_by"?: string | null,"expiry_date"?: string | null,"id"?: string,"item_id"?: string,"kind"?: Database["public"]['Enums']["stock_movement_kind"],"lot_no"?: string | null,"note"?: string | null,"patient_id"?: string | null,"quantity"?: number,"treatment_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -681,6 +767,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "stock_movements_clinic_id_treatment_id_fkey"
+      columns: ["clinic_id","treatment_id"]
+isOneToOne: false
+      referencedRelation: "treatments"
+      referencedColumns: ["clinic_id","id"]
     }
                   ]
                 },"tasks": {
@@ -709,16 +801,144 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"treatments": {
+                },"treatment_discounts": {
                   Row: {
-                    "clinic_id": string,"completed_at": string | null,"completed_by": string | null,"created_at": string,"created_by": string | null,"doctor_member_id": string,"id": string,"kind": Database["public"]['Enums']["treatment_kind"],"note": string | null,"patient_id": string,"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string | null
+                    "clinic_id": string,"created_at": string,"created_by": string | null,"created_by_name": string | null,"id": string,"mode": string,"patient_id": string,"plan_id": string,"total_after": number,"total_before": number,"treatment_ids": (string)[],"value": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "clinic_id": string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id": string,"id"?: string,"kind": Database["public"]['Enums']["treatment_kind"],"note"?: string | null,"patient_id": string,"performed_on": string,"procedure": string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
+                    "clinic_id": string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"id"?: string,"mode": string,"patient_id": string,"plan_id": string,"total_after": number,"total_before": number,"treatment_ids": (string)[],"value": number
                   }
                   Update: {
-                    "clinic_id"?: string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["treatment_kind"],"note"?: string | null,"patient_id"?: string,"performed_on"?: string,"procedure"?: string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
+                    "clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"id"?: string,"mode"?: string,"patient_id"?: string,"plan_id"?: string,"total_after"?: number,"total_before"?: number,"treatment_ids"?: (string)[],"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "treatment_discounts_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "treatment_discounts_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatment_discounts_clinic_id_plan_id_fkey"
+      columns: ["clinic_id","plan_id"]
+isOneToOne: false
+      referencedRelation: "treatment_plans"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"treatment_expenses": {
+                  Row: {
+                    "amount": number,"amount_original": number,"cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"clinic_id": string,"created_at": string,"created_by": string | null,"created_by_name": string | null,"currency": string,"description": string | null,"id": string,"lab_id": string | null,"rate": number,"statement_id": string | null,"treatment_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"amount_original": number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id": string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"currency"?: string,"description"?: string | null,"id"?: string,"lab_id"?: string | null,"rate": number,"statement_id"?: string | null,"treatment_id": string
+                  }
+                  Update: {
+                    "amount"?: number,"amount_original"?: number,"cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"created_by_name"?: string | null,"currency"?: string,"description"?: string | null,"id"?: string,"lab_id"?: string | null,"rate"?: number,"statement_id"?: string | null,"treatment_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "treatment_expenses_clinic_id_lab_id_fkey"
+      columns: ["clinic_id","lab_id"]
+isOneToOne: false
+      referencedRelation: "labs"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatment_expenses_clinic_id_statement_id_fkey"
+      columns: ["clinic_id","statement_id"]
+isOneToOne: false
+      referencedRelation: "lab_statements"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatment_expenses_clinic_id_treatment_id_fkey"
+      columns: ["clinic_id","treatment_id"]
+isOneToOne: false
+      referencedRelation: "treatments"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"treatment_plan_approvals": {
+                  Row: {
+                    "clinic_id": string,"id": string,"items": NonNullable<Json>,"patient_id": string,"patient_name": string,"plan_id": string,"plan_title": string,"recorded_by": string | null,"recorded_by_name": string | null,"signature": NonNullable<Json>,"signed_at": string,"total": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"id"?: string,"items": NonNullable<Json>,"patient_id": string,"patient_name": string,"plan_id": string,"plan_title": string,"recorded_by"?: string | null,"recorded_by_name"?: string | null,"signature": NonNullable<Json>,"signed_at"?: string,"total": number
+                  }
+                  Update: {
+                    "clinic_id"?: string,"id"?: string,"items"?: NonNullable<Json>,"patient_id"?: string,"patient_name"?: string,"plan_id"?: string,"plan_title"?: string,"recorded_by"?: string | null,"recorded_by_name"?: string | null,"signature"?: NonNullable<Json>,"signed_at"?: string,"total"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "treatment_plan_approvals_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "treatment_plan_approvals_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatment_plan_approvals_clinic_id_plan_id_fkey"
+      columns: ["clinic_id","plan_id"]
+isOneToOne: false
+      referencedRelation: "treatment_plans"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"treatment_plans": {
+                  Row: {
+                    "clinic_id": string,"created_at": string,"created_by": string | null,"doctor_member_id": string,"id": string,"is_active": boolean,"locked_at": string | null,"locked_by": string | null,"locked_by_name": string | null,"patient_id": string,"title": string,"unlocked_at": string | null,"unlocked_by": string | null,"unlocked_by_name": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"created_at"?: string,"created_by"?: string | null,"doctor_member_id": string,"id"?: string,"is_active"?: boolean,"locked_at"?: string | null,"locked_by"?: string | null,"locked_by_name"?: string | null,"patient_id": string,"title": string,"unlocked_at"?: string | null,"unlocked_by"?: string | null,"unlocked_by_name"?: string | null
+                  }
+                  Update: {
+                    "clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"doctor_member_id"?: string,"id"?: string,"is_active"?: boolean,"locked_at"?: string | null,"locked_by"?: string | null,"locked_by_name"?: string | null,"patient_id"?: string,"title"?: string,"unlocked_at"?: string | null,"unlocked_by"?: string | null,"unlocked_by_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "treatment_plans_clinic_id_doctor_member_id_fkey"
+      columns: ["clinic_id","doctor_member_id"]
+isOneToOne: false
+      referencedRelation: "clinic_members"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatment_plans_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patient_balances"
+      referencedColumns: ["clinic_id","patient_id"]
+    },{
+      foreignKeyName: "treatment_plans_clinic_id_patient_id_fkey"
+      columns: ["clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["clinic_id","id"]
+    }
+                  ]
+                },"treatments": {
+                  Row: {
+                    "amount": number | null,"clinic_id": string,"completed_at": string | null,"completed_by": string | null,"created_at": string,"created_by": string | null,"doctor_member_id": string,"id": string,"kind": Database["public"]['Enums']["treatment_kind"],"list_amount": number | null,"note": string | null,"patient_id": string,"performed_on": string,"plan_id": string,"price_item_id": string | null,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount"?: number | null,"clinic_id": string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id": string,"id"?: string,"kind": Database["public"]['Enums']["treatment_kind"],"list_amount"?: number | null,"note"?: string | null,"patient_id": string,"performed_on": string,"plan_id": string,"price_item_id"?: string | null,"procedure": string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number | null,"clinic_id"?: string,"completed_at"?: string | null,"completed_by"?: string | null,"created_at"?: string,"created_by"?: string | null,"doctor_member_id"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["treatment_kind"],"list_amount"?: number | null,"note"?: string | null,"patient_id"?: string,"performed_on"?: string,"plan_id"?: string,"price_item_id"?: string | null,"procedure"?: string,"status"?: Database["public"]['Enums']["treatment_status"],"tooth"?: string | null
                   }
                   Relationships: [
                     {
@@ -739,6 +959,18 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatments_clinic_id_plan_id_fkey"
+      columns: ["clinic_id","plan_id"]
+isOneToOne: false
+      referencedRelation: "treatment_plans"
+      referencedColumns: ["clinic_id","id"]
+    },{
+      foreignKeyName: "treatments_clinic_id_price_item_id_fkey"
+      columns: ["clinic_id","price_item_id"]
+isOneToOne: false
+      referencedRelation: "price_list_items"
+      referencedColumns: ["clinic_id","id"]
     }
                   ]
                 }
@@ -751,6 +983,20 @@ isOneToOne: false
                   ComputedFields: never
                   Relationships: [
                     
+                  ]
+                },"installment_status": {
+                  Row: {
+                    "amount": number,"clinic_id": string,"count": number | null,"due_date": string,"id": string,"paid": number | null,"patient_id": string,"plan_id": string,"plan_title": string,"seq": number,"status": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "payment_installments_clinic_id_plan_id_fkey"
+      columns: ["clinic_id","plan_id"]
+isOneToOne: false
+      referencedRelation: "payment_plans"
+      referencedColumns: ["clinic_id","id"]
+    }
                   ]
                 },"patient_balances": {
                   Row: {
@@ -818,6 +1064,21 @@ isOneToOne: false
             "add_attendance":
 { Args: { "p_in": string,"p_member": string,"p_out": string,"p_reason": string }; Returns: string
                            },
+"add_treatment_expense":
+{ Args: { "p_amount_original": number,"p_currency": string,"p_description": string,"p_lab": string,"p_lab_name": string,"p_rate": number,"p_treatment": string }; Returns: string
+                           },
+"apply_plan_discount":
+{ Args: { "p_mode": string,"p_plan": string,"p_treatments": (string)[],"p_value": number }; Returns: undefined
+                           },
+"cancel_lab_statement":
+{ Args: { "p_reason": string,"p_statement": string }; Returns: undefined
+                           },
+"cancel_payment_plan":
+{ Args: { "p_plan": string,"p_reason": string }; Returns: undefined
+                           },
+"cancel_treatment_expense":
+{ Args: { "p_expense": string,"p_reason": string }; Returns: undefined
+                           },
 "check_in":
 { Args: { "p_code": string }; Returns: {
               "action": string,"at": string,"worked_minutes": number
@@ -829,6 +1090,9 @@ isOneToOne: false
 "close_visit":
 { Args: { "p": Json,"p_appointment": string }; Returns: string
                            },
+"copy_treatment_plan":
+{ Args: { "p_plan": string,"p_title": string }; Returns: string
+                           },
 "correct_attendance":
 { Args: { "p_id": string,"p_in": string,"p_out": string,"p_reason": string }; Returns: undefined
                            },
@@ -837,12 +1101,37 @@ isOneToOne: false
               "code": string,"expires_at": string
             }[]
                            },
+"create_lab_statement":
+{ Args: { "p_clinic": string,"p_currency": string,"p_from": string,"p_invoice_date": string,"p_invoice_no": string,"p_items": Json,"p_lab": string,"p_lab_name": string,"p_note": string,"p_rate": number,"p_to": string,"p_total": number }; Returns: string
+                           },
+"create_payment_plan":
+{ Args: { "p_installments": Json,"p_note": string,"p_patient": string,"p_title": string }; Returns: string
+                           },
+"delete_treatment_plan":
+{ Args: { "p_plan": string }; Returns: undefined
+                           },
 "device_pairing_valid":
 { Args: { "p_code": string }; Returns: boolean
                            },
 "kiosk_current_code":
 { Args: Record<PropertyKey, never>; Returns: {
               "clinic_name": string,"code": string,"expires_at": string,"qr": string
+            }[]
+                           },
+"lab_candidates":
+{ Args: { "p_clinic": string,"p_from": string,"p_to": string }; Returns: {
+              "doctor_member_id": string,"doctor_name": string,"expensed": number,"kind": Database["public"]['Enums']["treatment_kind"],"patient_name": string,"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string,"treatment_id": string
+            }[]
+                           },
+"link_visit_materials":
+{ Args: { "p_appointment": string,"p_links": Json }; Returns: undefined
+                           },
+"lock_treatment_plan":
+{ Args: { "p_plan": string }; Returns: undefined
+                           },
+"plan_profitability":
+{ Args: { "p_plan": string }; Returns: {
+              "commission": number,"commission_rate": number,"lab": number,"material": number,"material_unpriced": boolean,"procedure": string,"profit": number,"revenue": number,"status": Database["public"]['Enums']["treatment_status"],"tooth": string,"treatment_id": string
             }[]
                            },
 "report_commission_items":
@@ -855,25 +1144,47 @@ isOneToOne: false
               "amount": number,"completed_at": string,"doctor_member_id": string,"doctor_name": string,"done_on": string,"patient_id": string,"patient_name": string,"procedure": string,"tooth": string,"treatment_id": string
             }[]
                            },
+"report_expenses":
+{ Args: { "p_clinic": string,"p_from": string,"p_to": string }; Returns: {
+              "amount": number,"day": string,"detail": string,"doctor_name": string,"kind": string,"label": string,"ref": string
+            }[]
+                           },
 "report_payments":
 { Args: { "p_clinic": string,"p_from": string,"p_to": string }; Returns: {
               "amount": number,"created_at": string,"id": string,"method": Database["public"]['Enums']["payment_method"],"paid_on": string,"patient_id": string,"patient_name": string,"received_by_name": string
             }[]
                            },
+"report_unfinished_plans":
+{ Args: { "p_clinic": string,"p_from": string,"p_to": string }; Returns: {
+              "doctor_member_id": string,"doctor_name": string,"done_amount": number,"done_items": number,"kinds": (Database["public"]['Enums']["treatment_kind"])[],"last_done_at": string,"locked": boolean,"next_appointment": string,"patient_id": string,"patient_name": string,"patient_phone": string,"plan_created_at": string,"plan_id": string,"plan_title": string,"started_items": number,"total_amount": number,"total_items": number
+            }[]
+                           },
 "revoke_device":
 { Args: { "p_member": string }; Returns: undefined
+                           },
+"set_active_treatment_plan":
+{ Args: { "p_plan": string }; Returns: undefined
                            },
 "set_commission_rate":
 { Args: { "p_member": string,"p_rate": number }; Returns: undefined
                            },
+"set_discount_limit":
+{ Args: { "p_clinic": string,"p_pct": number }; Returns: undefined
+                           },
+"sign_treatment_plan":
+{ Args: { "p_plan": string,"p_signature": Json }; Returns: string
+                           },
 "treatment_summaries":
 { Args: { "p_patient": string }; Returns: {
-              "doctor_name": string,"id": string,"kind": Database["public"]['Enums']["treatment_kind"],"performed_on": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string
+              "amount": number,"doctor_name": string,"id": string,"kind": Database["public"]['Enums']["treatment_kind"],"list_amount": number,"performed_on": string,"plan_id": string,"procedure": string,"status": Database["public"]['Enums']["treatment_status"],"tooth": string
             }[]
+                           },
+"unlock_treatment_plan":
+{ Args: { "p_plan": string }; Returns: undefined
                            }
           }
           Enums: {
-            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan"|"ekran","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","note_kind": "klinik"|"randevu"|"odeme","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","stock_category": "sarf"|"anestezik"|"dolgu"|"implant"|"frez_alet"|"sterilizasyon"|"ortodonti"|"diger","stock_movement_kind": "giris"|"kullanim"|"sayim"|"fire","task_priority": "yuksek"|"normal","treatment_kind": "muayene"|"rontgen"|"temizlik"|"dolgu"|"kanal"|"cekim"|"implant"|"kron_kopru"|"protez"|"dis_eti"|"ortodonti"|"beyazlatma"|"cerrahi"|"diger","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"|"cerrahi"|"diger"
+            "appointment_status": "bekliyor"|"onaylandi"|"tamamlandi"|"gelmedi"|"iptal","clinic_role": "sahip"|"yonetici"|"hekim"|"resepsiyonist"|"asistan"|"ekran"|"muhasebe","gender": "kadin"|"erkek"|"belirtilmedi","media_review_status": "inceleme_bekliyor"|"onaylandi"|"tekrar_istendi","member_status": "aktif"|"pasif","note_kind": "klinik"|"randevu"|"odeme","payment_method": "nakit"|"kredi_karti"|"havale"|"diger","radiograph_kind": "panoramik"|"periapikal"|"bitewing"|"sefalometrik"|"diger"|"agiz_ici_fotograf","radiograph_purpose": "tedavi_oncesi"|"tedavi_sonrasi"|"kontrol"|"teshis","stock_category": "sarf"|"anestezik"|"dolgu"|"implant"|"frez_alet"|"sterilizasyon"|"ortodonti"|"diger","stock_movement_kind": "giris"|"kullanim"|"sayim"|"fire","task_priority": "yuksek"|"normal","treatment_kind": "muayene"|"rontgen"|"temizlik"|"dolgu"|"kanal"|"cekim"|"implant"|"kron_kopru"|"protez"|"dis_eti"|"ortodonti"|"beyazlatma"|"cerrahi"|"diger","treatment_status": "planlandi"|"devam"|"tamamlandi","visit_type": "muayene"|"tedavi"|"kontrol"|"cerrahi"|"diger"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -993,7 +1304,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan", "ekran"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"note_kind": ["klinik", "randevu", "odeme"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"stock_category": ["sarf", "anestezik", "dolgu", "implant", "frez_alet", "sterilizasyon", "ortodonti", "diger"],"stock_movement_kind": ["giris", "kullanim", "sayim", "fire"],"task_priority": ["yuksek", "normal"],"treatment_kind": ["muayene", "rontgen", "temizlik", "dolgu", "kanal", "cekim", "implant", "kron_kopru", "protez", "dis_eti", "ortodonti", "beyazlatma", "cerrahi", "diger"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol", "cerrahi", "diger"]
+            "appointment_status": ["bekliyor", "onaylandi", "tamamlandi", "gelmedi", "iptal"],"clinic_role": ["sahip", "yonetici", "hekim", "resepsiyonist", "asistan", "ekran", "muhasebe"],"gender": ["kadin", "erkek", "belirtilmedi"],"media_review_status": ["inceleme_bekliyor", "onaylandi", "tekrar_istendi"],"member_status": ["aktif", "pasif"],"note_kind": ["klinik", "randevu", "odeme"],"payment_method": ["nakit", "kredi_karti", "havale", "diger"],"radiograph_kind": ["panoramik", "periapikal", "bitewing", "sefalometrik", "diger", "agiz_ici_fotograf"],"radiograph_purpose": ["tedavi_oncesi", "tedavi_sonrasi", "kontrol", "teshis"],"stock_category": ["sarf", "anestezik", "dolgu", "implant", "frez_alet", "sterilizasyon", "ortodonti", "diger"],"stock_movement_kind": ["giris", "kullanim", "sayim", "fire"],"task_priority": ["yuksek", "normal"],"treatment_kind": ["muayene", "rontgen", "temizlik", "dolgu", "kanal", "cekim", "implant", "kron_kopru", "protez", "dis_eti", "ortodonti", "beyazlatma", "cerrahi", "diger"],"treatment_status": ["planlandi", "devam", "tamamlandi"],"visit_type": ["muayene", "tedavi", "kontrol", "cerrahi", "diger"]
           }
         }
 } as const

@@ -64,6 +64,11 @@ export type Permission =
   | 'mesai.ekran'
   | 'rapor.oku'
   | 'rapor.kendi'
+  | 'plan.kilit.ac'
+  | 'indirim.yap'
+  | 'indirim.sinirsiz'
+  | 'maliyet.oku'
+  | 'maliyet.yaz'
   | 'prim.yonet';
 
 export type ClinicInfo = {
@@ -75,6 +80,11 @@ export type ClinicInfo = {
   slotMin: number;
   /** ISO gün numaraları: 1 = Pazartesi … 7 = Pazar */
   workingDays: number[];
+  /** Hekim/yönetici için en yüksek indirim yüzdesi (sahip sınırsız) */
+  discountLimitPct: number;
+  address?: string;
+  phone?: string;
+  email?: string;
 };
 
 export type StaffRef = { id: string; name: string };
@@ -112,7 +122,7 @@ async function loadClinicSession(userId: string, email: string): Promise<Session
   const { data: members, error } = await supabase
     .from('clinic_members')
     .select(
-      'id, display_name, clinic_id, clinics(id, name, timezone, open_time, close_time, slot_minutes, working_days), member_roles(role)',
+      'id, display_name, clinic_id, clinics(id, name, timezone, open_time, close_time, slot_minutes, working_days, discount_limit_pct, address, phone, email), member_roles(role)',
     )
     .eq('user_id', userId)
     .eq('status', 'aktif');
@@ -159,6 +169,10 @@ async function loadClinicSession(userId: string, email: string): Promise<Session
       closeMin: timeToMinutes(c.close_time.slice(0, 5)),
       slotMin: c.slot_minutes,
       workingDays: [...c.working_days].sort(),
+      discountLimitPct: c.discount_limit_pct,
+      address: c.address ?? undefined,
+      phone: c.phone ?? undefined,
+      email: c.email ?? undefined,
     },
     member: { id: m.id, name: m.display_name },
     roles,
@@ -222,7 +236,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             ? { status: 'signedOut' }
             : loaded?.key === loadKey
               ? loaded.state
-              : { status: 'loading' },
+              : // Aynı kullanıcı için yeniden yüklerken (reload) eski bilgi gösterilmeye devam eder;
+                // yoksa ekranlar kapanıp uygulama Ana Sayfa'ya dönerdi.
+                loaded && loaded.key.startsWith(`${userId}:`) && loaded.state.status === 'ready'
+                ? loaded.state
+                : { status: 'loading' },
     [authLoading, userId, loaded, loadKey],
   );
 
@@ -268,4 +286,5 @@ export const roleLabels: Record<ClinicRole, string> = {
   resepsiyonist: 'Resepsiyon',
   asistan: 'Asistan',
   ekran: 'Mesai Ekranı',
+  muhasebe: 'Muhasebe',
 };
